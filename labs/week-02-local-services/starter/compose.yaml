@@ -1,0 +1,161 @@
+# Week 2 Lab — Local Services Stack
+#
+# Four services:
+#   postgres           — relational backend store (metadata: params, metrics, tags)
+#   minio              — object store (artifacts: model files, plots)
+#   minio-create-bucket — one-shot job that creates the artifacts bucket
+#   mlflow             — tracking server (proxies between client, Postgres, and MinIO)
+#
+# Canonical tutorial: https://mlflow.org/docs/latest/ml/tracking/tutorials/remote-server/
+# Required deviation: mlflow server is containerized (fourth compose service) rather than
+#   run on the host, so the whole stack starts with a single "docker compose up -d --wait".
+#
+# Usage:
+#   cp .env.example .env
+#   docker compose up -d --wait    # bring all four services up and wait for healthchecks
+#   docker compose down            # stop (data persists in named volumes)
+#   docker compose down -v         # stop AND wipe volumes (fresh start)
+
+# Explicit project name. Compose otherwise defaults the project name to the base
+# DIRECTORY name — which is "starter"/"solution" for EVERY lab in this course, so
+# without this every week would silently share one project, one set of containers,
+# and one set of volumes.
+name: week02-local-services-starter
+
+services:
+
+  # ── Postgres: relational backend store ─────────────────────────────────────
+  # Stores experiment names, run IDs, parameters, metrics, and tags.
+  # Image pinned to 16.3 for reproducibility.
+  postgres:
+    image: postgres:16.3
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_HOST_PORT:-5532}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── MinIO: S3-compatible object store ──────────────────────────────────────
+  # TODO(student) — Exercise 1:
+  # Fill in the MinIO service definition below.
+  # Requirements:
+  #   - Use image: minio/minio:RELEASE.2024-06-13T22-53-53Z  (pinned version)
+  #   - Pass MINIO_ROOT_USER and MINIO_ROOT_PASSWORD from environment
+  #   - command: server /data --console-address ":9001"
+  #   - Expose port 9000 (S3 API) and 9001 (web console) to the host
+  #     (host ports are remapped: MINIO_API_PORT=5510 → 9000, MINIO_CONSOLE_PORT=5511 → 9001)
+  #   - Mount a named volume "minio-data" to /data
+  #   - Add a healthcheck that uses:
+  #       test: ["CMD-SHELL", "mc ready local || exit 1"]
+  #       interval: 5s, timeout: 5s, retries: 10
+  #     (mc is bundled with the minio/minio image)
+  # After filling this in, run:
+  #   docker compose up -d minio
+  # Then open http://localhost:5511 and log in with your .env credentials.
+  minio:
+    image: # TODO(student): fill in pinned minio/minio image tag
+    environment:
+      MINIO_ROOT_USER: # TODO(student): reference ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: # TODO(student): reference ${MINIO_ROOT_PASSWORD}
+    command: # TODO(student): server /data --console-address ":9001"
+    ports:
+      - "${MINIO_API_PORT:-5510}:9000"
+      - "${MINIO_CONSOLE_PORT:-5511}:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: # TODO(student): ["CMD-SHELL", "mc ready local || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ── minio-create-bucket: one-shot bucket initialisation ────────────────────
+  # TODO(student) — Exercise 1 (continued):
+  # Fill in the bucket-creation job below.
+  # Requirements:
+  #   - Use image: minio/mc:RELEASE.2025-08-13T08-35-41Z  (pinned version)
+  #   - depends_on: minio: condition: service_healthy
+  #   - The entrypoint should run:
+  #       mc alias set minio http://minio:9000 <user> <password> &&
+  #       mc mb --ignore-existing minio/<bucket>
+  #     Use shell variable substitution or reference env vars directly.
+  # After the bucket is created, confirm it appears in the MinIO console.
+  minio-create-bucket:
+    image: # TODO(student): fill in pinned minio/mc image tag
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      bash -c "
+        # TODO(student): set the mc alias and create the bucket
+        # mc alias set minio http://minio:9000 ${MINIO_ROOT_USER} ${MINIO_ROOT_PASSWORD} &&
+        # mc mb --ignore-existing minio/${MINIO_BUCKET}
+        echo 'TODO: implement bucket creation'
+      "
+
+  # ── MLflow tracking server ──────────────────────────────────────────────────
+  # TODO(student) — Exercise 2:
+  # Complete the mlflow service command and environment variables below.
+  # The server needs to know:
+  #   --backend-store-uri: where to write metadata (Postgres)
+  #   --artifacts-destination: where to store artifacts (MinIO bucket)
+  #   --host 0.0.0.0 --port 5000
+  #   --allowed-hosts: required by MLflow 3.5.0+ security middleware when host=0.0.0.0
+  # And these env vars (MinIO S3 credentials for the server):
+  #   MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+  #   AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY (= MinIO root creds)
+  #
+  # Notes:
+  #   - "postgres" and "minio" are the service names above — they are DNS names
+  #     inside the compose network. Use them as hostnames in the URIs.
+  #   - The healthcheck uses the /health endpoint (returns 200 when ready).
+  #   - depends_on: postgres healthy + minio-create-bucket completed.
+  mlflow:
+    build:
+      context: .
+      dockerfile: mlflow.Dockerfile
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: # TODO(student): http://minio:9000
+      AWS_ACCESS_KEY_ID: # TODO(student): ${MINIO_ROOT_USER}
+      AWS_SECRET_ACCESS_KEY: # TODO(student): ${MINIO_ROOT_PASSWORD}
+    command:
+      - --backend-store-uri
+      - # TODO(student): postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - --artifacts-destination
+      - # TODO(student): s3://${MINIO_BUCKET}
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "5000"
+      - --allowed-hosts
+      # NOTE: MLflow's host check does NOT strip the port, so you must allow the
+      # host:port form. The "host:*" wildcard accepts any port.
+      - # TODO(student): "localhost,127.0.0.1,mlflow,localhost:*,127.0.0.1:*,mlflow:*"
+    ports:
+      - "${MLFLOW_PORT:-5500}:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-create-bucket:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:5000/health\")' 2>/dev/null || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  minio-data:

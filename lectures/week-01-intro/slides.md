@@ -20,10 +20,10 @@ routerMode: hash
 - What teams, tools, and workflows matter first
 
 ---
-
-# Zillow Offers: a price, straight from a model
-
-<img src="/zillow.png" class="case-shot">
+layout: image
+image: /zillow.png
+backgroundSize: 60%
+---
 
 ---
 

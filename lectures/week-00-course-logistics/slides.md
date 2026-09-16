@@ -246,7 +246,7 @@ layout: section
 
 # Requirements
 
-```mermaid
+```mermaid {scale: 0.8}
 flowchart TD
     A["Labs: at least 9 of 12"] --> D{"All three met?"}
     B["Homework:<br/> at least 4 of 5 scoring >=50%"] --> D

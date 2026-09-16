@@ -1,0 +1,20 @@
+[project]
+name = "week-01-env-setup"
+version = "0.1.0"
+description = "Week 1 guided environment setup lab"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "scikit-learn>=1.8.0",
+    "pandas>=2.0.0,<3",
+    "python-dotenv>=1.0.0",
+]
+
+[dependency-groups]
+test = [
+    "pytest>=8.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

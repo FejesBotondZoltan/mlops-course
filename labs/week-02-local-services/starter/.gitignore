@@ -1,0 +1,22 @@
+# Environment and secrets — never commit
+.env
+
+# Your written exercise answers
+answers.md
+
+# Python virtual environment and caches
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+pytest-cache*
+
+# Docker Compose volumes directory (if using bind mounts)
+volumes/
+
+# Build artifacts
+build/
+dist/

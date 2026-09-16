@@ -36,10 +36,23 @@ jobs:
         with:
           node-version: 22          # current Slidev requires Node >= 22
       - name: Install Slidev + default theme
-        # Installed explicitly so the build is non-interactive: in CI Slidev
-        # cannot prompt to auto-install the theme ("theme not found"). Pin these
-        # versions once a term for reproducibility if desired.
-        run: npm init -y >/dev/null 2>&1 && npm install -D @slidev/cli @slidev/theme-default
+        # Installed explicitly so the build is non-interactive: in CI Slidev cannot
+        # prompt to auto-install a missing theme ("theme not found").
+        #
+        # VERSIONS ARE PINNED, AND MUST MATCH devDependencies IN THE INSTRUCTOR REPO'S
+        # ROOT package.json. This repo has no pnpm workspace -- the release ships only
+        # lectures/ -- so the pins cannot be inherited and are duplicated here on
+        # purpose. If they drift, the public site renders on a different Slidev than the
+        # one every deck was written and previewed against, which is exactly the class
+        # of bug students report and the instructor cannot reproduce. Bump both files
+        # together, once a term.
+        #
+        # mermaid is listed explicitly rather than relied on as a transitive dependency
+        # of @slidev/cli: nearly every deck contains ```mermaid diagrams, so a Slidev
+        # release that stopped vendoring it would break the published site silently.
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install -D @slidev/cli@52.19.1 @slidev/theme-default@0.25.0 mermaid@12.0.0
       - name: Build every lecture deck
         run: |
           set -e
@@ -55,7 +68,7 @@ jobs:
             # cd into the deck: Slidev resolves a deck's styles/index.css against the
             # CWD, not against the slides file, so building by path from the repo root
             # silently drops those styles. --out stays absolute (see above).
-            ( cd "lectures/$week" && npx slidev build slides.md --base ./ --out "$GITHUB_WORKSPACE/dist/$week" )
+            ( cd "lectures/$week" && "$GITHUB_WORKSPACE/node_modules/.bin/slidev" build slides.md --base ./ --out "$GITHUB_WORKSPACE/dist/$week" )
             weeks+=("$week")
           done
           # Write the landing page LAST so a deck build can never clobber it.
