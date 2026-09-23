@@ -55,7 +55,11 @@ def register_best_model(settings: Settings, run_id: str) -> ModelVersion | None:
     the sweep run it came from.
     """
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
-    return None  # placeholder — the CLI reports this as "not implemented yet"
+    return mlflow.register_model(
+        model_uri=f"runs:/{run_id}/model",
+        name=settings.registered_model_name,
+        tags={"registered_from": "week3-sweep"},
+    )
 
 
 def latest_version(settings: Settings) -> ModelVersion:
@@ -120,9 +124,33 @@ def promote_to_staging(settings: Settings, version: str) -> ModelVersion | None:
     """
     client = MlflowClient(settings.mlflow_tracking_uri)
     name = settings.registered_model_name
-    _ = name  # silence the unused-variable warning until you implement Step A
 
-    return None  # placeholder — the CLI reports this as "not implemented yet"
+    # Step A — pull evidence directly from the source run
+    source_run_id = client.get_model_version(name, version).run_id
+    metrics = client.get_run(source_run_id).data.metrics
+
+    # Step B — record evidence as tags
+    version_tags = {
+        "validation_f1": f"{metrics['f1']:.4f}",
+        "validation_roc_auc": f"{metrics['roc_auc']:.4f}",
+        "promoted_by": settings.model_owner,
+        "promoted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+    for key, value in version_tags.items():
+        client.set_model_version_tag(name, version, key, value)
+
+    registered_model_tags = {
+        "owner": settings.model_owner,
+        "task": "diabetes-binary-classification",
+    }
+    for key, value in registered_model_tags.items():
+        client.set_registered_model_tag(name, key, value)
+
+    # Step C — move pointers (aliases)
+    client.set_registered_model_alias(name, settings.model_alias, version)
+    client.set_registered_model_alias(name, "champion", version)
+
+    return client.get_model_version_by_alias(name, settings.model_alias)
 
 
 def trace_alias(settings: Settings) -> dict:
@@ -155,9 +183,29 @@ def trace_alias(settings: Settings) -> dict:
     """
     client = MlflowClient(settings.mlflow_tracking_uri)
     name, alias = settings.registered_model_name, settings.model_alias
-    _ = (name, alias)  # silence the unused-variable warning until you implement
 
-    return {}  # placeholder — the CLI reports this as "not implemented yet"
+    # Hop 1: alias -> version
+    model_version = client.get_model_version_by_alias(name, alias)
+
+    # Hop 2: version -> run (with fallback for models:/ registrations)
+    run_id = model_version.run_id
+    if not run_id and getattr(model_version, "model_id", None):
+        run_id = client.get_logged_model(model_version.model_id).source_run_id
+
+    # Hop 3: run -> evidence
+    run = client.get_run(run_id)
+
+    return {
+        "model_uri": f"models:/{name}@{alias}",
+        "version": model_version.version,
+        "aliases": model_version.aliases,
+        "run_id": run_id,
+        "run_name": run.info.run_name,
+        "git_commit": run.data.tags.get("git_commit"),
+        "params": run.data.params,
+        "metrics": run.data.metrics,
+        "version_tags": model_version.tags,
+    }
 
 
 def load_aliased_model(settings: Settings):

@@ -20,8 +20,10 @@ import matplotlib.pyplot as plt
 import mlflow
 import mlflow.sklearn
 import pandas as pd
+from mlflow.entities import Run
 from mlflow.exceptions import MlflowException
 from mlflow.models import infer_signature
+from pandas import DataFrame
 
 from .config import Settings
 from .data import build_dataset
@@ -86,6 +88,7 @@ def git_commit() -> str:
         return "unknown"
 
 
+
 def log_training_run(
     settings: Settings,
     family: str,
@@ -114,6 +117,17 @@ def log_training_run(
         # Log max_iter even for the forest, which ignores it — it keeps the
         # UI's compare table rectangular.
 
+        params = {
+            "model_family": family,
+            "random_seed": settings.random_seed,
+            "test_size": settings.test_size,
+            "max_iter": settings.max_iter,
+            "data_path": settings.data_path.name,
+            "n_rows": len(x_train) + len(x_test),
+            **hyperparams,
+        }
+        mlflow.log_params(params)
+
         # ── Tags: free-form labels, the thing you search on later ────────────
         # TODO(student) — Exercise 1b:
         # mlflow.set_tags({...}) with:
@@ -121,6 +135,13 @@ def log_training_run(
         #   "git_commit":   git_commit()      <- the link back to the code
         #   "sweep":        sweep_tag          <- ONLY when sweep_tag is not None
         # Params are for reproducing a run; tags are for FINDING it later.
+        tags = {
+            "model_family": family,
+            "git_commit": git_commit(),
+        }
+        if sweep_tag is not None:
+            tags["sweep"] = sweep_tag
+        mlflow.set_tags(tags)
 
         model = build_model(family, hyperparams, settings)
         model.fit(x_train, y_train)
@@ -129,6 +150,7 @@ def log_training_run(
         # ── Metrics: the measured outcome ─────────────────────────────────────
         # TODO(student) — Exercise 1c:
         # Log every metric in one call: mlflow.log_metrics(metrics)
+        mlflow.log_metrics(metrics)
 
         # ── Plots as artifacts ────────────────────────────────────────────────
         # TODO(student) — Exercise 2:
@@ -138,6 +160,13 @@ def log_training_run(
         # log_figure writes straight to the artifact store — no local temp file.
         # Call plt.close(figure) after each one, or matplotlib warns once you
         # have opened more than 20 figures (the sweep opens 12).
+        fig_roc = roc_curve_figure(model, x_test, y_test)
+        mlflow.log_figure(fig_roc, "plots/roc_curve.png")
+        plt.close(fig_roc)
+
+        fig_cm = confusion_matrix_figure(model, x_test, y_test)
+        mlflow.log_figure(fig_cm, "plots/confusion_matrix.png")
+        plt.close(fig_cm)
 
         # ── The model itself ──────────────────────────────────────────────────
         # TODO(student) — Exercise 1d:
@@ -150,8 +179,16 @@ def log_training_run(
         # )
         # The signature is what populates the UI's Schema tab, and what a
         # serving runtime reads to validate incoming requests (Week 9).
+        mlflow.sklearn.log_model(
+            model,
+            name="model",
+            signature=infer_signature(x_train, model.predict(x_train)),
+            input_example=x_train.head(3),
+        )
 
         return RunResult(run_id=run.info.run_id, run_name=run_name, metrics=metrics)
+
+
 
 
 def run_sweep(settings: Settings) -> list[RunResult]:
@@ -190,6 +227,15 @@ def run_sweep(settings: Settings) -> list[RunResult]:
         )
 
         # TODO(student) — Exercise 3: run one nested child run per grid cell.
+        for family, hyperparams in SWEEP_GRID:
+            result = log_training_run(
+                settings=settings,
+                family=family,
+                hyperparams=hyperparams,
+                sweep_tag=SWEEP_TAG,
+                nested=True,
+            )
+            results.append(result)
 
         # Record the winner on the parent, so the sweep summarises itself.
         if results:
@@ -203,7 +249,7 @@ def run_sweep(settings: Settings) -> list[RunResult]:
     return results
 
 
-def search_sweep_runs(settings: Settings, *, min_f1: float = 0.0) -> pd.DataFrame:
+def search_sweep_runs(settings: Settings, *, min_f1: float = 0.0) -> list[Run] | DataFrame:
     """Query the tracking server for this sweep's child runs, best first.
 
     `filter_string` is evaluated by the tracking server against Postgres — this
@@ -229,9 +275,13 @@ def search_sweep_runs(settings: Settings, *, min_f1: float = 0.0) -> pd.DataFram
     """
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
     try:
-        # TODO(student) — Exercise 4: replace this empty frame with the real
-        # mlflow.search_runs(...) call described in the docstring above.
-        return pd.DataFrame()
+        return mlflow.search_runs(
+            experiment_names=[settings.mlflow_experiment_name],
+            filter_string=f"tags.sweep = '{SWEEP_TAG}' and metrics.f1 > {min_f1}",
+            order_by=["metrics.f1 DESC", "attributes.start_time DESC"],
+            max_results=50,
+            output_format="pandas",
+        )
     except MlflowException:
         # The experiment does not exist yet — a friendlier signal than a
         # raw REST traceback for a student who has not run the sweep.

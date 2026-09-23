@@ -40,7 +40,18 @@ def roc_curve_figure(model, x_test, y_test, *, label: str = "model") -> plt.Figu
     5. Delete the @pytest.mark.skip in tests/test_plots.py and re-run pytest.
     """
     fig, ax = plt.subplots(figsize=(5, 5))
-    # Placeholder — a valid but empty Figure, so the starter's tests still run.
+
+    RocCurveDisplay.from_estimator(
+        model,
+        x_test,
+        y_test,
+        ax=ax,
+        name=label,
+        plot_chance_level=True,
+    )
+    ax.set_title("ROC Curve")
+    fig.tight_layout()
+
     return fig
 
 
@@ -62,5 +73,17 @@ def confusion_matrix_figure(model, x_test, y_test) -> plt.Figure:
        How many diabetic patients did the model call healthy?
     """
     fig, ax = plt.subplots(figsize=(5, 5))
-    # Placeholder — a valid but empty Figure, so the starter's tests still run.
+
+    ConfusionMatrixDisplay.from_estimator(
+        model,
+        x_test,
+        y_test,
+        ax=ax,
+        display_labels=["no diabetes", "diabetes"],
+        colorbar=False,
+    )
+    ax.set_title("Confusion Matrix")
+    fig.tight_layout()
+
     return fig
+
