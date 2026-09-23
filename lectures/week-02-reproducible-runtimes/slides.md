@@ -337,7 +337,7 @@ It gives a place to:
 
 ---
 layout: image
-image: public/mlflow-tracking-setup-overview.png
+image: /mlflow-tracking-setup-overview.png
 backgroundSize: 80%
 ---
 
@@ -602,3 +602,10 @@ Now that the infrastructure exists and records every run, we use MLflow *well*:
 - parameter sweeps and run search
 - custom plots logged as artifacts
 - the **Model Registry**: named models, versions, stage transitions, promotion to Staging
+
+<!--
+The words "stage transitions, promotion to Staging" on this slide are DELIBERATE and must not
+be "corrected" to aliases. MLflow deprecated stages in 2.9, and Week 3 opens its
+required-deviation slide by quoting this line verbatim and explaining why the vocabulary
+outlived the API.
+-->

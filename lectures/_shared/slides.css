@@ -22,3 +22,14 @@
   opacity: 1;
   margin-top: 0;
 }
+
+.slidev-layout blockquote {
+  max-width: 48rem;
+  margin: 1.25rem 0;
+  padding-left: 1rem;
+  border-left: 0.25rem solid #4338ca;
+  color: #334155;
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.4;
+}

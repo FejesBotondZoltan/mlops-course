@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">Two shapes of metric history</title>
+
+  <rect width="1200" height="620" fill="#ffffff"/>
+
+  <!-- Plot area: x=120..1060, y=70..480 -->
+  <g stroke="#cbd5e1" stroke-width="1">
+    <line x1="120" y1="70" x2="1060" y2="70"/>
+    <line x1="120" y1="172.5" x2="1060" y2="172.5"/>
+    <line x1="120" y1="275" x2="1060" y2="275"/>
+    <line x1="120" y1="377.5" x2="1060" y2="377.5"/>
+    <line x1="120" y1="480" x2="1060" y2="480"/>
+  </g>
+
+  <g stroke="#334155" stroke-width="2">
+    <line x1="120" y1="70" x2="120" y2="480"/>
+    <line x1="120" y1="480" x2="1060" y2="480"/>
+  </g>
+
+  <g font-family="sans-serif" font-size="18" fill="#475569">
+    <text x="78" y="76">1.0</text>
+    <text x="78" y="178">0.75</text>
+    <text x="86" y="281">0.5</text>
+    <text x="78" y="384">0.25</text>
+    <text x="94" y="486">0</text>
+
+    <text x="114" y="512">0</text>
+    <text x="302" y="512">1</text>
+    <text x="490" y="512">2</text>
+    <text x="678" y="512">3</text>
+    <text x="866" y="512">4</text>
+    <text x="1054" y="512">5</text>
+
+    <text x="520" y="565" text-anchor="middle">Training step</text>
+    <text x="-275" y="42" transform="rotate(-90)" text-anchor="middle">Metric value</text>
+  </g>
+
+  <!-- Neural-network loss: 0.82, 0.57, 0.39, 0.28, 0.22, 0.19 -->
+  <polyline
+    points="120,144 308,246 496,320 684,365 872,390 1060,402"
+    fill="none"
+    stroke="#1e3a8a"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <g fill="#1e3a8a">
+    <circle cx="120" cy="144" r="6"/>
+    <circle cx="308" cy="246" r="6"/>
+    <circle cx="496" cy="320" r="6"/>
+    <circle cx="684" cy="365" r="6"/>
+    <circle cx="872" cy="390" r="6"/>
+    <circle cx="1060" cy="402" r="6"/>
+  </g>
+
+  <!-- Random Forest test F1: 0.6240 at step 1 -->
+  <circle cx="308" cy="224" r="10" fill="#dc2626" stroke="#ffffff" stroke-width="4"/>
+
+  <g font-family="sans-serif" font-size="18" fill="#334155">
+    <line x1="760" y1="100" x2="805" y2="100" stroke="#1e3a8a" stroke-width="6" stroke-linecap="round"/>
+    <text x="820" y="106">Neural Network</text>
+    <circle cx="782" cy="132" r="8" fill="#dc2626"/>
+    <text x="820" y="138">Random Forest</text>
+  </g>
+</svg>

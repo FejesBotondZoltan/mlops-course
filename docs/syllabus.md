@@ -36,8 +36,8 @@ The following table details the theoretical lectures, practical laboratory exerc
 | Week | Lecture Topic | Laboratory Exercise | Assignments |
 | :--- | :--- | :--- | :--- |
 | **Week 1** | **Introduction to MLOps:** Goals, role in ML practice, ML lifecycle vs. DevOps. Concepts of reproducibility, scalability, and automation. Roles and tool overview (Git, Docker, MLflow, CI/CD). | **Dev Environment:** Cross-platform setup (Python, Git, Docker). Repo structure, entry points, `.env` configs, and running/versioning a baseline ML pipeline. | - |
-| **Week 2** | **Reproducible Runtimes:** Developer runs vs. reproducible environments. The role and storage of artifacts and metadata. | **Local Services:** Docker Compose setup separating artifacts (MinIO), metadata (MLflow), and databases (Postgres). "One-command" startup. | **Project topic due (W2)** |
-| **Week 3** | **Experiment Tracking:** MLflow from an engineering perspective. Logging parameters, metrics, plots. Model registry: versions, aliases, promotion, and traceability. | **MLflow Integration:** Running the baseline model, logging metrics/plots, registering models, and promoting to staging. | - |
+| **Week 2** | **Reproducible Runtimes:** Developer runs vs. reproducible environments. The role and storage of artifacts and metadata. | **Local Services:** Docker Compose setup separating artifacts (MinIO), metadata (MLflow), and databases (Postgres). "One-command" startup. | — |
+| **Week 3** | **Experiment Tracking:** MLflow from an engineering perspective. Logging parameters, metrics, plots. Model registry: versions, aliases, promotion, and traceability. | **MLflow Integration:** Running the baseline model, logging metrics/plots, registering models, and promoting to staging. | **Project topic due (W3)** |
 | **Week 4** | **Data Versioning:** Data lifecycle (DVC + MinIO). Dataset snapshots, pipeline stages, and data lineage basics. | **DVC Introduction:** Adding data to DVC with MinIO as the S3-compatible remote storage, `dvc.yaml` pipeline setup, and linking runs to MLflow. | - |
 | **Week 5** | **Data Quality:** Data contracts and quality gates. Types of data errors, training-serving skew, and automated validation. Tooling landscape (Pandera, Great Expectations). | **Data Validation:** Introduction to Pandera schemas. Inserting validation into the data prep pipeline. | **HW1 out** |
 | **Week 6** | **Model Quality Gates:** Automated evaluation and decision points. Metric regression, acceptance criteria, slice-based evaluation, and basic Responsible AI/fairness checks. | **Evaluation Pipeline:** Recording baseline metrics, implementing regression tests, slice metric calculation, and "go/no-go" rules. | — |
@@ -120,7 +120,7 @@ Use of AI assistants is permitted — this is an industry reality the course emb
 
 | | Released | Due | Window | What it covers |
 | :--- | :--- | :--- | :--- | :--- |
-| **Project topic** | Week 1 | **Week 3** (Sun 27 Sep) | 2 weeks | Dataset + prediction task, approved by the instructor. — [brief](../homework/project-topic/README.md) |
+| **Project topic** | Week 1 | **Week 3** (Sun 27 Sep) | 3 weeks | Dataset + prediction task, approved by the instructor. — [brief](../homework/project-topic/README.md) |
 | **HW 1** | Week 5 (5 Oct) | **Week 8** (Sun 1 Nov) | 4 weeks | Basic MLOps project with data versioning, experiment tracking, and model management. — [brief](../homework/hw-01-data-versioning-and-tracking/README.md) |
 | **HW 2** | Week 7 (19 Oct) | **Week 10** (Sun 15 Nov) | 4 weeks | Automated data validation, evaluation, and documented quality thresholds ("go/no-go"). — [brief](../homework/hw-02-validation-and-evaluation-gates/README.md) |
 | **HW 3** | Week 9 (2 Nov) | **Week 12** (Sun 29 Nov) | 4 weeks | End-to-end Prefect flow with parameterization and retry handling. — [brief](../homework/hw-03-orchestration/README.md) |
