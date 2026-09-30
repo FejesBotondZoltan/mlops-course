@@ -2,4 +2,4 @@
     remote = minio
 ['remote "minio"']
     url = s3://dvc-storage/dvcstore
-    endpointurl = http://localhost:9000
+    endpointurl = http://localhost:5510
