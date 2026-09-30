@@ -116,7 +116,7 @@ Use of AI assistants is permitted — this is an industry reality the course emb
 
 **Each assignment is released on the odd (in-person) week whose lab it depends on, and is due three to four weeks later** (the last two windows are shorter, because the semester ends).
 
-*Submissions are due by 23:59 (Budapest) on the Sunday closing the deadline week, via the student's own project repository.*
+*Submissions are due by 23:59 (Budapest) on the Sunday closing the deadline week, via the student's own project repository. Students submit the URL of the graded commit in Moodle. Lab work is also submitted in Moodle; Microsoft Teams is used for announcements and questions only.*
 
 | | Released | Due | Window | What it covers |
 | :--- | :--- | :--- | :--- | :--- |

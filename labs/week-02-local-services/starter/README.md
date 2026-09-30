@@ -74,6 +74,10 @@ which auto-skips until the tracking server is reachable.
 
 Complete these exercises in order — each builds on the previous.
 
+Exercises 4 and 5 ask for a **written answer**. Put those in a file called `answers.md` in this
+directory, and **commit it with your code**. It is part of your submission, and it is read
+alongside your solution.
+
 ### Exercise 1 — Stand up storage (MinIO)
 
 Open `compose.yaml` and find the `minio` and `minio-create-bucket` service blocks marked `TODO(student)`.
@@ -181,6 +185,14 @@ uv run python src/main.py
 You have three runs now. The third has different metrics. Both the "seed-42" runs and the "seed-7" run are permanently recorded with their configuration.
 
 **Written answer** (add to `answers.md`): Now that runs are centrally recorded, what can you answer that you could not answer after Week 1's terminal-scrollback experiment? (Think about: reproducibility, shareability, comparability.)
+
+### Finish — commit your work
+
+```bash
+git status          # answers.md must appear; .env and .venv/ must NOT
+git add labs/week-02-local-services/starter
+git commit -m "week02: local services stack and written answers"
+```
 
 ---
 
