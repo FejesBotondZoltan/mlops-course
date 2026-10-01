@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import mlflow
+import mlflow.data
+from mlflow.data.pandas_dataset import PandasDataset
 
 from .config import Settings
+from .data import TARGET_COLUMN
 from .datasets import file_md5
 from .dvc_meta import pointer_md5, remote_object_uri
 
@@ -31,8 +34,20 @@ def log_data_version(settings: Settings) -> dict:
     see dvc_meta.py), dvc_url (the helper above), dvc_remote ("<bucket>/<remote
     path>" from settings) and data_file (the file name).
     """
-    _ = pointer_md5  # keep the import meaningful until you implement the body
-    return {}  # placeholder — the CLI reports this as "not implemented yet"
+    md5 = pointer_md5(settings.measurements_path)
+    url = dvc_data_url(settings)
+    remote = f"{settings.dvc_bucket}/{settings.dvc_remote_path}"
+    data_file = settings.measurements_path.name
+
+    tags = {
+        "dvc_md5": md5,
+        "dvc_url": url,
+        "dvc_remote": remote,
+        "data_file": data_file,
+    }
+
+    mlflow.set_tags(tags)
+    return tags
 
 
 def log_dataset_input(frame, settings: Settings, source: str) -> str | None:
@@ -43,7 +58,14 @@ def log_dataset_input(frame, settings: Settings, source: str) -> str | None:
     log it as an input with context "training", and return its digest.
     Reference: https://mlflow.org/docs/latest/ml/dataset/
     """
-    return None  # placeholder — the CLI reports this as "not implemented yet"
+    dataset: PandasDataset = mlflow.data.from_pandas(
+        frame,
+        source=source,
+        name="diabetes-measurements",
+        targets=TARGET_COLUMN,
+    )
+    mlflow.log_input(dataset, context="training")
+    return dataset.digest
 
 
 def require_data_added(settings: Settings) -> str:

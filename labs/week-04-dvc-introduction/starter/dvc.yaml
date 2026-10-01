@@ -20,6 +20,34 @@ stages:
       - data/processed/train.csv
       - data/processed/test.csv
 
+  train:
+    cmd: uv run python src/main.py train
+    deps:
+      - data/processed/train.csv
+      - src/week_04_dvc_introduction/pipeline.py
+      - src/week_04_dvc_introduction/model.py
+    params:
+      - random_seed
+      - train.C
+      - train.family
+      - train.max_iter
+    outs:
+      - models/model.pkl
+      - models/mlflow_run_id.json:
+          cache: false
+
+  evaluate:
+    cmd: uv run python src/main.py evaluate
+    deps:
+      - data/processed/test.csv
+      - models/model.pkl
+      - models/mlflow_run_id.json
+      - src/week_04_dvc_introduction/pipeline.py
+      - src/week_04_dvc_introduction/model.py
+    metrics:
+      - metrics/metrics.json:
+          cache: false
+
   # TODO(student) — Exercise 5: add the stages `train` and `evaluate`, each run as
   # `uv run python src/main.py <stage>`. Read the stage functions in pipeline.py to
   # find which files each one reads and writes, and which params it uses. Keep the

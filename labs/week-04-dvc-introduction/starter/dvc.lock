@@ -1,0 +1,84 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: uv run python src/main.py prepare
+    deps:
+    - path: data/measurements.csv
+      hash: md5
+      md5: a8fd7b4f0d6d1bc4e378a8f76c5fff0c
+      size: 31750
+    - path: src/week_04_dvc_introduction/data.py
+      hash: md5
+      md5: d9669d765a2b488d9c26235bebfad491
+      size: 2631
+    - path: src/week_04_dvc_introduction/pipeline.py
+      hash: md5
+      md5: e1577dff2175524ddbd6dd9094a36949
+      size: 5983
+    params:
+      params.yaml:
+        prepare.test_size: 0.25
+        random_seed: 42
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: c0893fb60844c5f31b0f5b7c2e9df865
+      size: 8041
+    - path: data/processed/train.csv
+      hash: md5
+      md5: d9eba76cf921c13f5af2032d09a12f35
+      size: 23818
+  train:
+    cmd: uv run python src/main.py train
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: d9eba76cf921c13f5af2032d09a12f35
+      size: 23818
+    - path: src/week_04_dvc_introduction/model.py
+      hash: md5
+      md5: fe84107f1edf65268f0e584f02676e2a
+      size: 2480
+    - path: src/week_04_dvc_introduction/pipeline.py
+      hash: md5
+      md5: e1577dff2175524ddbd6dd9094a36949
+      size: 5983
+    params:
+      params.yaml:
+        random_seed: 42
+        train.C: 1.0
+        train.family: logreg
+        train.max_iter: 1000
+    outs:
+    - path: models/mlflow_run_id.json
+      hash: md5
+      md5: c71e16847863b12889122cd98a0762be
+      size: 86
+    - path: models/model.pkl
+      hash: md5
+      md5: ac74130cfa73768c971beca3195e7e3d
+      size: 1937
+  evaluate:
+    cmd: uv run python src/main.py evaluate
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: c0893fb60844c5f31b0f5b7c2e9df865
+      size: 8041
+    - path: models/model.pkl
+      hash: md5
+      md5: ac74130cfa73768c971beca3195e7e3d
+      size: 1937
+    - path: src/week_04_dvc_introduction/model.py
+      hash: md5
+      md5: fe84107f1edf65268f0e584f02676e2a
+      size: 2480
+    - path: src/week_04_dvc_introduction/pipeline.py
+      hash: md5
+      md5: e1577dff2175524ddbd6dd9094a36949
+      size: 5983
+    outs:
+    - path: metrics/metrics.json
+      hash: md5
+      md5: 436bcdc5c19f2d92b5611932b25aa989
+      size: 110
