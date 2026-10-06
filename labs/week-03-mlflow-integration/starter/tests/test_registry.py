@@ -68,7 +68,7 @@ def test_aliased_model_loads_and_predicts(live_settings, staging_version) -> Non
 
     This is the only test that exercises the artifact proxy end to end, and it
     is what proves Week 2's credential story: the client holds the tracking URI
-    and nothing else, while the server holds the MinIO keys.
+    and nothing else, while the server holds the Silo keys.
     """
     from week_03_mlflow_integration.data import build_dataset
 

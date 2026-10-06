@@ -27,17 +27,12 @@ def roc_curve_figure(model, x_test, y_test, *, label: str = "model") -> plt.Figu
     at *every* decision threshold, not just the 0.5 default that `predict` uses.
     The dashed chance line is what a coin flip would score.
 
-    TODO(student) — Exercise 2:
-    1. Draw the curve onto `ax` with scikit-learn's display helper:
-         RocCurveDisplay.from_estimator(
-             model, x_test, y_test, ax=ax, name=label, plot_chance_level=True
-         )
-       `plot_chance_level=True` adds the dashed diagonal.
-    2. Give the axes a title containing "ROC".
-    3. Call fig.tight_layout() so the labels are not clipped.
-    4. Return the Figure. Do NOT call plt.show() or plt.savefig() — the caller
-       hands the figure to mlflow.log_figure().
-    5. Delete the @pytest.mark.skip in tests/test_plots.py and re-run pytest.
+    TODO(student) — Exercise 2: draw the ROC curve of `model` on the test set
+    onto `ax` with RocCurveDisplay, named `label`, with the dashed chance line.
+    Give the axes a title that contains "ROC", call fig.tight_layout() so the
+    labels are not cut off, and return the figure. Do not show or save it: the
+    caller logs it with mlflow.log_figure.
+    Reference: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.RocCurveDisplay.html
     """
     fig, ax = plt.subplots(figsize=(5, 5))
     # Placeholder — a valid but empty Figure, so the starter's tests still run.
@@ -50,16 +45,11 @@ def confusion_matrix_figure(model, x_test, y_test) -> plt.Figure:
     This is the plot that makes a mediocre recall concrete: the bottom-left
     cell is the count of diabetic patients the model called healthy.
 
-    TODO(student) — Exercise 2:
-    1. Draw the matrix onto `ax` with:
-         ConfusionMatrixDisplay.from_estimator(
-             model, x_test, y_test, ax=ax,
-             display_labels=["no diabetes", "diabetes"], colorbar=False,
-         )
-    2. Title the axes, call fig.tight_layout(), and return the Figure.
-    3. Delete the matching @pytest.mark.skip in tests/test_plots.py.
-    4. When you can see the plot in the MLflow UI, read the bottom-left cell.
-       How many diabetic patients did the model call healthy?
+    TODO(student) — Exercise 2: draw the confusion matrix of `model` on the test
+    set onto `ax` with ConfusionMatrixDisplay, with the class names
+    "no diabetes" and "diabetes" and no colour bar. Title the axes, call
+    fig.tight_layout(), and return the figure.
+    Reference: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.ConfusionMatrixDisplay.html
     """
     fig, ax = plt.subplots(figsize=(5, 5))
     # Placeholder — a valid but empty Figure, so the starter's tests still run.

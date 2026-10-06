@@ -43,7 +43,7 @@ MD5 is not safe against someone who forges data on purpose, but it is fine for n
 
 - A **path** (`data/train.csv`) names a location. The content can change while the name stays the same.
 - A **timestamp** (`train_2026_03_04.csv`) names a moment. Two people can save different data on the same day.
-- A **content hash** (`md5: 786c54f2…`) is computed from the bytes. Different bytes always give a different name.
+- A **content hash** (`md5: 786c54f2…`) is computed from the file content. Different content always gives a different name.
 
 Storing objects under a name computed from their content is called **content-addressed storage**.
 
@@ -56,7 +56,7 @@ Git keeps every version of every file in every clone. For code this is what you 
 - you cannot remove the data from history later;
 - GitHub blocks files larger than 100 MiB.
 
-So we split the job: **Git keeps the identity, an object store keeps the bytes.**
+So we split the job: **Git keeps the pointer, an object store keeps the data.**
 
 ### Data version control tools
 
@@ -68,21 +68,21 @@ Several tools version data. They solve the same problem in different ways:
 - **Delta Lake**: tables with versions and "time travel" (`VERSION AS OF 12`).
 - **Dolt**: a SQL database with Git-style branches.
 
-DVC and Git LFS name data by its content. Delta Lake and S3 bucket versioning give each write a new version number or ID instead. The course uses DVC because it is open source, works next to Git, and stores data in any S3-compatible bucket, such as our MinIO. In November 2025 lakeFS took over the DVC project; DVC stays open source under the same licence (DVC blog, 18 Nov 2025).
+DVC and Git LFS name data by its content. Delta Lake and S3 bucket versioning give each write a new version number or ID instead. The course uses DVC because it is open source, works next to Git, and stores data in any S3-compatible bucket, such as our Silo. In November 2025 lakeFS took over the DVC project; DVC stays open source under the same licence (DVC blog, 18 Nov 2025).
 
 The practice (a fixed identity for every data version, recorded with the model) is what you take to your next team, whichever tool it uses.
 
 ### Installing DVC and `dvc init`
 
 ```bash
-uv add "dvc[s3]"                  # the [s3] extra adds S3 and MinIO support
+uv add "dvc[s3]"                  # the [s3] extra adds S3 and S3-compatible stores
 dvc init                          # run it inside a Git repository
 git commit -m "Initialise DVC"
 ```
 
 `dvc init` creates `.dvc/config` (settings, such as the remote), `.dvc/.gitignore` (keeps the cache out of Git) and `.dvcignore` (files DVC should not look at), and stages them with `git add`. The cache folder appears later, on the first `dvc add`. The lab is a subfolder of the course repository, so it uses `dvc init --subdir`.
 
-### DVC: pointers in Git, data in MinIO
+### DVC: pointers in Git, data in Silo
 
 DVC does not have its own history. Git does the versioning.
 
@@ -92,7 +92,7 @@ DVC does not have its own history. Git does the versioning.
 2. It writes a small **pointer file**, `data/measurements.csv.dvc`, with four fields: `md5`, `size`, `hash` and `path`.
 3. It adds the data file to `data/.gitignore`, so Git does not track it.
 
-You commit the pointer file to Git. `dvc push` uploads the data to a **remote**, here the `dvc-storage` bucket in MinIO.
+You commit the pointer file to Git. `dvc push` uploads the data to a **remote**, here the `dvc-storage` bucket in Silo.
 The object is stored at `files/md5/<first 2 characters>/<other 30 characters>`.
 
 Because the name is the hash, duplicates cost nothing: pushing the same data twice uploads nothing the second time.
@@ -101,7 +101,7 @@ Because the name is the hash, duplicates cost nothing: pushing the same data twi
 dvc add data/measurements.csv      # workspace -> cache, writes the pointer
 git add data/measurements.csv.dvc data/.gitignore
 git commit -m "dataset version 1"
-dvc push                           # cache -> remote (MinIO)
+dvc push                           # cache -> remote (Silo)
 ```
 
 ### `dvc push`: upload data
@@ -167,7 +167,7 @@ In Week 3 the run logged `data_path` and `n_rows`. Both stay the same when someo
 This week every training run records the data version as **tags**:
 
 - `dvc_md5`: the hash, read from the `.dvc` file (not computed again);
-- `dvc_url`: where DVC stored those bytes, such as `s3://dvc-storage/…`;
+- `dvc_url`: where DVC stored that data, such as `s3://dvc-storage/…`;
 - next to Week 3's `git_commit`, so the run names its code **and** its data.
 
 It is a tag because tags exist so that someone can **find** a run (Week 3). Tag every training run when the run is made. Tags are searchable, so you can ask which runs trained on a given version of the data:
@@ -186,10 +186,10 @@ The two hashes answer different questions:
 
 | | DVC md5 | MLflow digest |
 | --- | --- | --- |
-| Hashes | the file's raw bytes | the values of the first 10,000 rows, the row count and the column names |
+| Hashes | the file's exact content | the values of the first 10,000 rows, the row count and the column names |
 | Our file (version 3) | `a8fd7b4f0d6d1bc4e378a8f76c5fff0c` | `9a465ecc` |
 | Same values, Windows line endings | changes: `d2384a69…` | stays `9a465ecc` |
-| Answers | "are these the same bytes?" | "is this roughly the same table?" |
+| Answers | "is this exactly the same file?" | "is this roughly the same table?" |
 
 Editing one BMI value changes both (the digest becomes `3748223f`). For an audit, use the md5; the digest is a quick check that a table changed.
 
@@ -206,7 +206,7 @@ The lab versions one CSV. Other data needs other steps; the practice (a fixed ve
 
 ### Byte-exact hashing and line endings
 
-DVC 3 hashes the raw bytes of a file. A CSV with Windows line endings (CRLF) has different bytes from the same CSV with LF. So it gets a different md5, and `dvc status` says "modified" although nobody changed the data. Fix the line endings of data files in `.gitattributes` (`*.csv text eol=lf`), and write data files with `\n` in your code.
+DVC 3 hashes the exact content of a file. A CSV with Windows line endings (CRLF) differs from the same CSV with LF. So it gets a different md5, and `dvc status` says "modified" although nobody changed the data. Fix the line endings of data files in `.gitattributes` (`*.csv text eol=lf`), and write data files with `\n` in your code.
 
 ### Automate commands that must run together
 
@@ -239,10 +239,10 @@ Lab: Exercise 7
 ## Key terms
 
 - **Content-addressed storage**: objects are stored under a name computed from their content.
-- **Content hash (md5)**: a short fingerprint computed from a file's bytes.
+- **Content hash (md5)**: a short fingerprint computed from a file's content.
 - **Pointer file (`.dvc`)**: the small file in Git that names the data by its hash.
 - **DVC cache**: the local copy of tracked data, in `.dvc/cache`. Never committed.
-- **DVC remote**: shared storage for the bytes; here a MinIO bucket.
+- **DVC remote**: shared storage for the data; here a Silo bucket.
 - **Stage**: one step of a DVC pipeline, with `cmd`, `deps`, `params` and `outs`.
 - **`dvc.lock`**: the record of what a pipeline run actually used.
 - **Dataset digest (MLflow)**: MLflow's short hash of a table's values. Not a byte hash.
@@ -259,10 +259,10 @@ Lab: Exercise 7
 
 ## How this connects to the lab
 
-The lab uses the Week 3 Compose stack, plus a second MinIO bucket, `dvc-storage`. You:
+The lab uses the Week 3 Compose stack, plus a second Silo bucket, `dvc-storage`. You:
 
-1. set up DVC and point it at MinIO, with no keys in Git;
-2. receive the first batch, build dataset version 1 (461 rows), add it, read the pointer, push it, and find it in MinIO;
+1. set up DVC and point it at Silo, with no keys in Git;
+2. receive the first batch, build dataset version 1 (461 rows), add it, read the pointer, push it, and find it in Silo;
 3. delete the cache and see `dvc checkout` fail and `dvc pull` succeed;
 4. receive two more batches (versions 2 and 3, 568 and 768 rows) and go back to version 1;
 5. declare `train` and `evaluate` in `dvc.yaml`, and see which stages re-run after a change;
@@ -273,7 +273,7 @@ The lab uses the Week 3 Compose stack, plus a second MinIO bucket, `dvc-storage`
 ## Recommended reading
 
 - **Designing Machine Learning Systems (Huyen), Ch. 3–4.** *Focus on:* why "which data" is a hard question in practice.
-- **DVC documentation: Get Started, and the S3 remote guide** (https://doc.dvc.org/start). *Focus on:* the `.dvc` file, `add`/`push`/`pull`/`checkout`, and the `endpointurl` setting that points an "S3" remote at MinIO.
+- **DVC documentation: Get Started, and the S3 remote guide** (https://doc.dvc.org/start). *Focus on:* the `.dvc` file, `add`/`push`/`pull`/`checkout`, and the `endpointurl` setting that points an "S3" remote at Silo.
 - **Gebru et al., "Datasheets for Datasets"**, *Communications of the ACM* 64(12), 2021. *Focus on:* what to write down about a dataset besides its version.
 - **Roberts et al.**, *Nature Machine Intelligence* 3, 199–217 (2021). *Focus on:* the section on datasets and "Frankenstein datasets".
 - Optional: **MLflow documentation: Datasets.** *Focus on:* what `log_input` records.
@@ -285,7 +285,7 @@ The lab uses the Week 3 Compose stack, plus a second MinIO bucket, `dvc-storage`
 1. A colleague edits three values in `data/measurements.csv`. `git status` shows nothing to commit. Why? What does `dvc status` say?
 2. You run `git checkout HEAD~1 -- data/measurements.csv.dvc` on a laptop that never pulled that version. What does `dvc checkout` do, and what is the fix?
 3. `dvc repro` says "Stage 'train' didn't change, skipping", but you edited `model.py`. Give two possible reasons.
-4. An auditor asks which exact bytes trained the model in production. Do you give the MLflow digest or the DVC md5? Why?
+4. An auditor asks which exact data trained the model in production. Do you give the MLflow digest or the DVC md5? Why?
 5. Your project's dataset is 20 KB and never changes. Would you use DVC? What would you record instead?
 6. A regulator orders you to delete every model trained on one customer's data. Which record from this week lets you find those models?
 7. A teammate ran `git push` but forgot `dvc push`. What happens when you run `dvc pull`, and which command would have prevented it?

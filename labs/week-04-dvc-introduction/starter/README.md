@@ -3,10 +3,10 @@ description:
   title: "Week 4 Lab: DVC Introduction"
   summary: |
     Put the training data under version control with DVC, using the Week 2/3
-    MinIO as an S3 remote. Track a dataset by content hash, push the bytes,
+    Silo as an S3 remote. Track a dataset by content hash, push the data,
     travel between versions, declare the pipeline as a graph with dvc.yaml, and
     stamp the data version onto the MLflow run so the traceability chain finally
-    reaches the bytes.
+    reaches the data.
 ---
 
 # Week 4 Lab: DVC Introduction
@@ -15,7 +15,7 @@ Last week's traceability chain went from a deployed alias back to a run and its 
 commit, and then stopped at `data/diabetes.csv`: a **path**.
 
 Today you give the data an identity. You track a dataset by its content hash and store the
-bytes in MinIO. You add new batches as new versions, move between them, and declare the pipeline in
+data in Silo. You add new batches as new versions, move between them, and declare the pipeline in
 `dvc.yaml`. Then
 you record the data version on the MLflow run, and stop a run that would record the wrong
 one.
@@ -25,7 +25,7 @@ Background for every exercise: the Week 4 lecture and `docs/notes/week-04-notes.
 ## Based on
 
 - **DVC Get Started:** https://doc.dvc.org/start
-- **S3-compatible remotes (for MinIO):** https://doc.dvc.org/user-guide/data-management/remote-storage/amazon-s3
+- **S3-compatible remotes (for Silo):** https://doc.dvc.org/user-guide/data-management/remote-storage/amazon-s3
 - **`dvc.yaml`:** https://doc.dvc.org/user-guide/project-structure/dvcyaml-files
 - **Command reference:** https://doc.dvc.org/command-reference
 - **MLflow datasets:** https://mlflow.org/docs/latest/ml/dataset/
@@ -33,9 +33,9 @@ Background for every exercise: the Week 4 lecture and `docs/notes/week-04-notes.
 **Deviations from the tutorial:**
 
 1. **`dvc init --subdir`**, because this lab is a subfolder of a larger Git repository.
-2. **A MinIO remote**, not a local folder, because "the data is on my laptop" is the
+2. **A Silo remote**, not a local folder, because "the data is on my laptop" is the
    problem we are solving.
-3. **Keys from the environment**, not `dvc remote modify --local`. You export the MinIO
+3. **Keys from the environment**, not `dvc remote modify --local`. You export the Silo
    keys from `.env` in your terminal (the Makefile does the same), so no key is written
    into a config file.
 4. **`core.autostage true`**, so a forgotten `git add` of a `.dvc` file cannot lose a data
@@ -68,7 +68,7 @@ New this week: **`dvc[s3]`**. `boto3` and `matplotlib` are no longer needed.
 cp .env.example .env
 ```
 
-Set `MLFLOW_MODEL_OWNER` to your name. `DVC_BUCKET` names a **second** MinIO bucket, for
+Set `MLFLOW_MODEL_OWNER` to your name. `DVC_BUCKET` names a **second** Silo bucket, for
 the data.
 
 `PIPELINE_RANDOM_SEED`, `PIPELINE_TEST_SIZE` and `PIPELINE_MAX_ITER` are moved to `params.yaml` for tracking.
@@ -87,7 +87,7 @@ Expected: **26 passed, 25 skipped**. Each skip names the exercise that unlocks i
 make up
 ```
 
-Open the MinIO console at http://localhost:5511. You should see **two** buckets:
+Open the Silo console at http://localhost:5511. You should see **two** buckets:
 `mlflow-artifacts` and `dvc-storage`.
 
 ---
@@ -108,16 +108,16 @@ Exercise 7 is optional.
 | Finish: commit and submit | — | 5 min |
 | Optional: data you have not added | 7 | 10 min |
 
-### Exercise 1: initialise DVC and point it at MinIO (≈ 5 min)
+### Exercise 1: initialise DVC and point it at Silo (≈ 5 min)
 
 DVC needs a project and a **remote**: the storage that holds the data. Here the remote is
-the `dvc-storage` bucket in MinIO. The remote is written into `.dvc/config`, which is
+the `dvc-storage` bucket in Silo. The remote is written into `.dvc/config`, which is
 committed to Git. You set this up once per repository, and you check it in every new project you join.
 
 **Do:**
 
 1. Read the `dvc-init` target in the Makefile: it is six commands. `--subdir` is needed
-   here; `endpointurl` is what points an "S3" remote at MinIO.
+   here; `endpointurl` is what points an "S3" remote at Silo.
 2. Run it: `make dvc-init`
 3. Look at what was created, then commit:
    ```bash
@@ -125,12 +125,12 @@ committed to Git. You set this up once per repository, and you check it in every
    cat .dvc/.gitignore
    git add .dvc/config      # dvc init staged it before the remote was added
    git status               # .dvc/config, .dvc/.gitignore and .dvcignore are staged
-   git commit -m "week04: initialise DVC with MinIO as the remote"
+   git commit -m "week04: initialise DVC with Silo as the remote"
    ```
 
 **Check:** to check your work, run `uv run pytest tests/test_dvc_repo.py`. It prints
 `4 passed, 6 skipped`.
-`.dvc/config` names the remote `minio` and contains no key or password.
+`.dvc/config` names the remote `storage` and contains no key or password.
 
 **Stuck?**
 1. Lecture: "Install DVC and start a project" · Notes: "Installing DVC and `dvc init`"
@@ -147,7 +147,7 @@ merged. DVC tracks this file. Each time a batch arrives, you rebuild the file, a
 records a new version.
 
 In this exercise the first batch arrives, and you record it as version 1 (461 rows). The
-data goes to MinIO, and a small pointer file goes to Git. This is how you share a dataset
+data goes to Silo, and a small pointer file goes to Git. This is how you share a dataset
 with a teammate without emailing a CSV.
 
 The code you use:
@@ -164,11 +164,11 @@ The code you use:
 1. The first batch arrives: `make next-batch` prints `batch_01.csv arrived: 461 rows`.
 2. Implement `build_measurements` in `src/week_04_dvc_introduction/datasets.py`.
 3. Build the dataset: `make build-data`. It prints 461 rows and the md5.
-4. Give this terminal the MinIO keys from `.env`. `dvc push` and `dvc pull` need them.
+4. Give this terminal the Silo keys from `.env`. `dvc push` and `dvc pull` need them.
    Run this once in every new terminal:
    ```bash
    set -a && . ./.env && set +a
-   export AWS_ACCESS_KEY_ID="$MINIO_ROOT_USER" AWS_SECRET_ACCESS_KEY="$MINIO_ROOT_PASSWORD"
+   export AWS_ACCESS_KEY_ID="$S3_ACCESS_KEY" AWS_SECRET_ACCESS_KEY="$S3_SECRET_KEY"
    ```
 5. Track, commit and push version 1:
    ```bash
@@ -181,7 +181,7 @@ The code you use:
 6. Look at three things:
    - `data/measurements.csv.dvc`: the pointer (`md5`, `size`, `hash`, `path`);
    - `data/.gitignore`: DVC wrote it, so Git ignores the data file;
-   - the MinIO console: in `dvc-storage`, open `dvcstore/files/md5/`, then the folder named
+   - the Silo console: in `dvc-storage`, open `dvcstore/files/md5/`, then the folder named
      after the **first two characters** of your md5.
 
 **Check:** to check your work, delete the Exercise 2 skip markers in `tests/test_datasets.py`
@@ -189,7 +189,7 @@ and run `uv run pytest tests/test_datasets.py`. It prints `6 passed, 2 skipped`.
 your pointer is `786c54f2770fa1e7ea5438e6e44b6486`.
 
 **Stuck?**
-1. Lecture: "`dvc add` writes a pointer file" · Notes: "DVC: pointers in Git, data in MinIO"
+1. Lecture: "`dvc add` writes a pointer file" · Notes: "DVC: pointers in Git, data in Silo"
    and "Byte-exact hashing and line endings"
 2. pandas docs: https://pandas.pydata.org/docs/reference/api/pandas.concat.html and
    https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
@@ -197,7 +197,7 @@ your pointer is `786c54f2770fa1e7ea5438e6e44b6486`.
 
 **Written answer** (in `answers.md`):
 
-1. What did Git gain in this commit, and about how many bytes is it? What did MinIO gain?
+1. What did Git gain in this commit, and about how large is it? What did Silo gain?
    Why is that difference the whole idea of DVC?
 2. A classmate runs `make build-data` with the same batch and gets a byte-identical `.dvc` file. Name two things
    `build_measurements` does to make that true, and one thing that would break it.
@@ -216,8 +216,8 @@ file after an accidental deletion, and when a new teammate clones the repository
 ```bash
 rm data/measurements.csv
 rm -rf .dvc/cache
-uv run dvc checkout data/measurements.csv   # fails: the bytes are not in the cache
-uv run dvc pull data/measurements.csv       # downloads them from MinIO
+uv run dvc checkout data/measurements.csv   # fails: the data is not in the cache
+uv run dvc pull data/measurements.csv       # downloads them from Silo
 uv run python src/main.py verify-data       # compares the file with its pointer
 ```
 
@@ -364,7 +364,7 @@ on its `5. Data version` line.
 **Written answer** (in `answers.md`):
 
 1. MLflow's digest has 8 characters; DVC's md5 has 32. What does each one hash? Which would
-   you give an auditor who asks you to prove which bytes trained this model? What is the
+   you give an auditor who asks you to prove which data trained this model? What is the
    other one good for?
 2. Run `make runs-for-data` and write down the filter string it used. What question does it
    answer that Week 3 could not?
@@ -416,7 +416,7 @@ prints ``Cannot run `train` yet`` and tells you to run `dvc add`.
 
 **Written answer** (in `answers.md`):
 
-1. Which bytes did the run from step 3 train on, and which version does its tag name? An
+1. Which data did the run from step 3 train on, and which version does its tag name? An
    auditor finds this run a year later. What do they conclude, and why is that worse than a
    run with no data tag?
 2. Your check runs inside the `train` stage. Name one other place in a team's workflow
@@ -449,12 +449,12 @@ and upload that URL to Moodle.
 | `data/incoming/batch_*.csv` | Git | the batches that have not arrived yet (a simulation) |
 | `data/raw/batch_*.csv` | Git | the batches that have arrived; the dataset is built from them |
 | `data/diabetes.csv` | Git | the Week 1–3 snapshot, unchanged |
-| `data/measurements.csv` | **MinIO** (`dvc-storage`) | the versioned dataset |
-| `data/measurements.csv.dvc` | Git | four lines naming the bytes above |
+| `data/measurements.csv` | **Silo** (`dvc-storage`) | the versioned dataset |
+| `data/measurements.csv.dvc` | Git | four lines naming the data above |
 | `dvc.yaml`, `params.yaml` | Git | what you declared |
 | `dvc.lock` | Git | what actually ran |
 | `metrics/metrics.json`, `models/mlflow_run_id.json` | Git | `cache: false`, so they show in a diff |
-| `models/model.pkl`, `data/processed/*.csv` | DVC cache / MinIO | outputs the pipeline can rebuild |
+| `models/model.pkl`, `data/processed/*.csv` | DVC cache / Silo | outputs the pipeline can rebuild |
 | `.dvc/config` | Git | the shared remote definition |
 | `.dvc/config.local`, `.dvc/cache/`, `.dvc/tmp/` | nowhere (git-ignored) | local only; `config.local` can hold keys |
 
@@ -470,8 +470,8 @@ make down-v    # stop AND delete both buckets and the database
 | Problem | Fix |
 | --- | --- |
 | `ERROR: failed to initiate DVC - ... is not tracked by any supported SCM tool` | You ran `dvc init` without `--subdir`. Use `make dvc-init`. |
-| `NoCredentialsError` / `Unable to locate credentials` on `dvc push` or `dvc pull` | This terminal has no MinIO keys. Repeat step 4 of Exercise 2, or use the Makefile. |
-| `dvc push` fails with a TLS/SSL error | The endpoint is `http://`. Run `uv run dvc remote modify minio use_ssl false`. |
+| `NoCredentialsError` / `Unable to locate credentials` on `dvc push` or `dvc pull` | This terminal has no Silo keys. Repeat step 4 of Exercise 2, or use the Makefile. |
+| `dvc push` fails with a TLS/SSL error | The endpoint is `http://`. Run `uv run dvc remote modify storage use_ssl false`. |
 | `make repro` says "didn't change, skipping", but you want a new MLflow run | Correct: nothing changed. Use `make link`. |
 | `No batch file in data/raw` | No batch has arrived yet. Run `make next-batch` (Exercise 2). |
 | `ERROR: Checkout failed ... Is your cache up to date?` | That version is not in your cache. Run `dvc pull` (Exercise 3). |
@@ -481,7 +481,7 @@ make down-v    # stop AND delete both buckets and the database
 | `dvc status` says `modified` after a fresh clone | Line endings (CRLF). The lab's `.gitattributes` forces LF; try `git add --renormalize .`. |
 | `Bind for 0.0.0.0:5500 failed: port is already allocated` | Another week's stack is running. Stop it with `docker compose down` in that folder. |
 | `dvc dag` opens a pager | Press `q`. The Makefile avoids this with `DVC_PAGER=cat`. |
-| Only one bucket in the MinIO console | Your `.env` is older than this lab. Set `DVC_BUCKET=dvc-storage`, then `make down-v && make up`. |
+| Only one bucket in the Silo console | Your `.env` is older than this lab. Set `DVC_BUCKET=dvc-storage`, then `make down-v && make up`. |
 
 ## Next steps
 

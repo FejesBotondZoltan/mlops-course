@@ -152,7 +152,7 @@ def cmd_trace(settings: Settings, args: argparse.Namespace) -> None:
     print(f"Take hop 4 yourself:  git diff --stat {chain['git_commit']} -- .")
     print()
 
-    # The alias resolves through the artifact proxy — no MinIO credentials here.
+    # The alias resolves through the artifact proxy — no Silo credentials here.
     model = load_aliased_model(settings)
     _, x_test, _, _ = build_dataset(settings)
     predictions = model.predict(x_test.head(5))

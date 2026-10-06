@@ -210,4 +210,4 @@ starter/
 
 ## Next steps
 
-In Week 2 this project gets its first real infrastructure: MLflow, MinIO, and Postgres running via Docker Compose.
+In Week 2 this project gets its first real infrastructure: MLflow, Silo, and Postgres running via Docker Compose.

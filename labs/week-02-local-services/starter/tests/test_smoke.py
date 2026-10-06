@@ -1,10 +1,7 @@
 """Smoke tests for the Week 2 pipeline.
 
-These tests do NOT require a running Docker stack.
-They verify the pipeline logic in isolation: data loading, model training,
-and metric shapes — the same guarantees Week 1 tests gave, plus the new
-MLflow settings. Any test that would require a live MLflow server is
-decorated with @pytest.mark.skip so the starter passes out of the box.
+They check data loading, training and the metrics without the Docker stack.
+`test_mlflow_run_logged` needs the stack, and skips itself when it is down.
 """
 import pytest
 
@@ -60,24 +57,39 @@ def test_seed_42_metrics() -> None:
     assert metrics["accuracy"] == pytest.approx(0.7344, abs=0.001)
 
 
-@pytest.mark.skip(
-    reason="Exercise 3 — implement MLflow logging in cli.py, then remove this skip."
-)
+@pytest.mark.skip(reason="Exercise 3 — log the run in cli.py, then delete this skip marker.")
 def test_mlflow_run_logged() -> None:
-    """After Exercise 3: confirm that main() logs a run to the tracking server.
+    """The latest run in the experiment has the params, the metrics and the baseline F1."""
+    import urllib.request
+    import urllib.error
 
-    TODO(student) — Exercise 3, step 4:
-    1. Ensure the stack is running: docker compose up -d --wait
-    2. Delete the @pytest.mark.skip line above.
-    3. Implement this test:
-       - Call main() (from week_02_local_services.cli import main)
-       - Use the MLflow client to query the last run in the experiment:
-           import mlflow
-           client = mlflow.tracking.MlflowClient(settings.mlflow_tracking_uri)
-           runs = client.search_runs(experiment_ids=[...])
-           assert len(runs) > 0
-       - Assert the run has params and at least one metric.
-    Note: this test requires a running MLflow server. Guard it with a
-    reachability check or document that it needs the stack.
-    """
-    raise NotImplementedError
+    settings = load_settings()
+
+    try:
+        urllib.request.urlopen(settings.mlflow_tracking_uri + "/health", timeout=2)
+    except (urllib.error.URLError, OSError):
+        pytest.skip("MLflow tracking server not reachable — start the stack first.")
+
+    import mlflow
+
+    mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
+
+    client = mlflow.tracking.MlflowClient(settings.mlflow_tracking_uri)
+
+    exp = client.get_experiment_by_name(settings.mlflow_experiment_name)
+    if exp is None:
+        pytest.skip(
+            "Experiment not found — run 'uv run python src/main.py' first."
+        )
+
+    runs = client.search_runs(
+        experiment_ids=[exp.experiment_id],
+        order_by=["start_time DESC"],
+        max_results=1,
+    )
+    assert len(runs) > 0, "No runs found — run 'uv run python src/main.py' first."
+
+    latest_run = runs[0]
+    assert "random_seed" in latest_run.data.params, "random_seed param not logged"
+    assert "f1" in latest_run.data.metrics, "f1 metric not logged"
+    assert latest_run.data.metrics["f1"] == pytest.approx(0.5785, abs=0.001)

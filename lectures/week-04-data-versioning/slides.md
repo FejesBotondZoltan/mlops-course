@@ -3,9 +3,9 @@ theme: default
 title: Week 4 — Data Versioning
 info: |
   Lecture for the course "Lifecycle of Artificial Intelligence Systems".
-  Covers content-addressed data versioning with DVC, MinIO as an S3-compatible
+  Covers content-addressed data versioning with DVC, Silo as an S3-compatible
   remote, dvc.yaml pipeline stages and dvc.lock, and linking a data version to an
-  MLflow run so the traceability chain reaches the bytes.
+  MLflow run so the traceability chain reaches the data.
 class: text-left
 transition: slide-left
 mdc: true
@@ -26,7 +26,7 @@ duration: 80min
 **Lifecycle of Artificial Intelligence Systems**
 
 - What it means to version data, and why Git cannot do it
-- DVC: pointers in Git, bytes in object storage
+- DVC: pointers in Git, data in object storage
 - `dvc.yaml`: the pipeline as a declared graph
 - Linking a data version to an MLflow run
 
@@ -406,7 +406,7 @@ In 2021, ECMWF found **a few hundred corrupted fields**, out of **3.1 billion**,
   <div class="arrow">→</div>
   <div class="node"><ph-wrench class="ic" />Files fixed in place<br><small>14 April and 21 July 2021</small></div>
   <div class="arrow">→</div>
-  <div class="node"><ph-files class="ic" />Same name,<br>different bytes</div>
+  <div class="node"><ph-files class="ic" />Same name,<br>different content</div>
 </div>
 
 ECMWF asked users to **re-download** files they got before the fix. Is your copy from before or after?
@@ -418,7 +418,7 @@ ECMWF asked users to **re-download** files they got before the fix. Is your copy
 
 <!--
 Option B, third slide.
-Focus: a provider can change the bytes without changing the name. Only your own record of the hash tells you which copy you have.
+Focus: a provider can change the content without changing the name. Only your own record of the hash tells you which copy you have.
 The corruption showed as a line or band of wrong values across a latitude. The copies in ECMWF's MARS archive were not affected. The page gives no checksums, so users cannot check old downloads.
 -->
 
@@ -592,7 +592,7 @@ Ask: does your own project need DVC?
 - **Git** keeps a small file that names the data (the hash).
 - **An object store** keeps the data itself, under that hash.
 
-You already run an object store: **MinIO**, since Week 2.
+You already run an object store: **Silo**, since Week 2.
 
 <!--
 Focus: the same split as Week 2, now for data.
@@ -638,7 +638,7 @@ Sources: DVC[^1][] · lakeFS[^2][] · Git LFS[^3][] · Delta Lake[^4][] · Dolt[
 </v-click>
 <v-click>
 
-**Why DVC here:** open source, works next to Git, and stores data in any S3-compatible bucket, like our MinIO.
+**Why DVC here:** open source, works next to Git, and stores data in any S3-compatible bucket, like our Silo.
 
 </v-click>
 
@@ -664,7 +664,7 @@ In November 2025 lakeFS bought DVC from Iterative.ai. DVC stays open source unde
 <div class="cards" style="grid-template-columns:repeat(4,1fr)">
   <div v-click class="card"><carbon-logo-git class="ic" style="color:#f05032" /><b>Works with Git</b>Git keeps the history</div>
   <div v-click class="card"><ph-hash class="ic" /><b>Tracks files by hash</b>the content hash is the name</div>
-  <div v-click class="card"><ph-cloud-arrow-up class="ic" /><b>Stores the bytes in a remote</b>for us: a MinIO bucket</div>
+  <div v-click class="card"><ph-cloud-arrow-up class="ic" /><b>Stores the data in a remote</b>for us: a Silo bucket</div>
   <div v-click class="card"><carbon-flow class="ic" /><b>Runs pipelines</b>re-runs only what changed</div>
 </div>
 
@@ -683,7 +683,7 @@ Focus: DVC has no history of its own. The history is Git's.
 <carbon-terminal class="icon-corner" />
 
 ```bash {1|2|3|all}
-uv add "dvc[s3]"                  # the [s3] extra adds S3 and MinIO support
+uv add "dvc[s3]"                  # the [s3] extra adds S3 and S3-compatible stores
 dvc init                          # run it inside a Git repository
 git commit -m "Initialise DVC"
 ```
@@ -722,7 +722,7 @@ outs:
 
 This `measurements.csv.dvc` file goes into Git **instead of** the 19 KB of data.
 
-- `md5`: the hash of the bytes, and their address in storage
+- `md5`: the hash of the file content, and its address in storage
 - `size`: checked before a download
 - `hash`: which algorithm was used
 - `path`: relative to this `.dvc` file
@@ -733,7 +733,7 @@ Focus: four fields, about a hundred bytes. Students will read this file on their
 
 ---
 
-# Where the pointer lives, and where the bytes go
+# Where the pointer lives, and where the data goes
 
 <div class="flow">
   <div class="node" style="width:15rem"><ph-folder-open class="ic" /><b>Your workspace</b><br><span class="mono">data/measurements.csv<br>data/measurements.csv.dvc</span></div>
@@ -745,7 +745,7 @@ Focus: four fields, about a hundred bytes. Students will read this file on their
     <div class="text-sm text-right pr-20 opacity-80">↕ the md5 is the address</div>
     <div class="flow" style="margin:0">
       <div class="arrow-l">dvc push<span class="arrow">⇄</span>dvc pull</div>
-      <div class="node" style="width:16rem"><img class="logo" src="/minio-logo.png" alt="MinIO" /><b>MinIO: dvc-storage</b><br><span class="mono">files/md5/78/6c54f2…<br>(the 19,034 bytes)</span></div>
+      <div class="node" style="width:16rem"><ph-hard-drives class="ic" /><b>Silo: dvc-storage</b><br><span class="mono">files/md5/78/6c54f2…<br>(19,034 bytes)</span></div>
     </div>
   </div>
 </div>
@@ -754,7 +754,7 @@ Focus: four fields, about a hundred bytes. Students will read this file on their
 > `dvc add` also writes `data/.gitignore`, so Git does not track the data file too.
 
 <!--
-Focus: Git and DVC never manage the same bytes.
+Focus: Git and DVC never manage the same file.
 -->
 
 ---
@@ -768,7 +768,7 @@ Focus: Git and DVC never manage the same bytes.
   <div class="arrow-l dim">dvc add<span class="arrow">→</span></div>
   <div class="node" style="width:12rem"><ph-archive class="ic" /><b>Local cache</b><br><span class="mono">.dvc/cache</span></div>
   <div class="arrow-l on">dvc push<span class="arrow">→</span></div>
-  <div class="node" style="width:12rem"><img class="logo" src="/minio-logo.png" alt="MinIO" /><b>Remote</b><br><span class="mono">MinIO: dvc-storage</span></div>
+  <div class="node" style="width:12rem"><ph-hard-drives class="ic" /><b>Remote</b><br><span class="mono">Silo: dvc-storage</span></div>
 </div>
 
 - Uploads the files your `.dvc` files point to, from the cache to the remote[^1][].
@@ -778,7 +778,7 @@ Focus: Git and DVC never manage the same bytes.
 [^1]: DVC docs, "push". https://doc.dvc.org/command-reference/push
 
 <!--
-Focus: push moves bytes between two machines, never touches the workspace.
+Focus: push moves data between two machines, never touches the workspace.
 -->
 
 ---
@@ -792,7 +792,7 @@ Focus: push moves bytes between two machines, never touches the workspace.
   <div class="arrow-l on">checkout<span class="arrow">←</span></div>
   <div class="node" style="width:12rem"><ph-archive class="ic" /><b>Local cache</b><br><span class="mono">.dvc/cache</span></div>
   <div class="arrow-l on">fetch<span class="arrow">←</span></div>
-  <div class="node" style="width:12rem"><img class="logo" src="/minio-logo.png" alt="MinIO" /><b>Remote</b><br><span class="mono">MinIO: dvc-storage</span></div>
+  <div class="node" style="width:12rem"><ph-hard-drives class="ic" /><b>Remote</b><br><span class="mono">Silo: dvc-storage</span></div>
 </div>
 
 - Downloads the data your `.dvc` files point to, into the cache, then into the workspace.
@@ -816,7 +816,7 @@ Focus: pull is the only command that goes all the way from the remote to your di
   <div class="arrow-l on">dvc checkout<span class="arrow">←</span></div>
   <div class="node" style="width:12rem"><ph-archive class="ic" /><b>Local cache</b><br><span class="mono">.dvc/cache</span></div>
   <div class="arrow-l dim"><span class="arrow">↔</span></div>
-  <div class="node dim" style="width:12rem"><img class="logo" src="/minio-logo.png" alt="MinIO" /><b>Remote</b><br><span class="mono">MinIO: dvc-storage</span></div>
+  <div class="node dim" style="width:12rem"><ph-hard-drives class="ic" /><b>Remote</b><br><span class="mono">Silo: dvc-storage</span></div>
 </div>
 
 - Makes the workspace match the `.dvc` files, using **only** the local cache[^1][].
@@ -839,9 +839,9 @@ Focus: checkout is fast and offline, which is also its limit. The next slides sh
 | --- | --- | --- | --- |
 | `dvc init` | nothing | — | <span v-click="1">creates `.dvc/` in the Git repo: the config, and later the local cache</span> |
 | `dvc add` | your file | <span v-click="2">workspace</span> | <span v-click="3">local cache (and writes the pointer)</span> |
-| `dvc push` | the bytes | <span v-click="4">local cache</span> | <span v-click="5">remote (MinIO)</span> |
-| `dvc pull` | the bytes | <span v-click="6">remote</span> | <span v-click="7">cache, then workspace</span> |
-| `dvc checkout` | the bytes | <span v-click="8">local cache</span> | <span v-click="9">workspace</span> |
+| `dvc push` | the data | <span v-click="4">local cache</span> | <span v-click="5">remote (Silo)</span> |
+| `dvc pull` | the data | <span v-click="6">remote</span> | <span v-click="7">cache, then workspace</span> |
+| `dvc checkout` | the data | <span v-click="8">local cache</span> | <span v-click="9">workspace</span> |
 
 <!--
 Focus: fill it in together. The question is always "between which two places?"
@@ -856,13 +856,13 @@ Focus: fill it in together. The question is always "between which two places?"
 | Output | Store | Why |
 | --- | --- | --- |
 | Params, metrics, tags | <span v-click="1">Postgres</span> | <span v-click="3">small, structured, easy to query</span> |
-| The model file, plots | <span v-click="2">MinIO</span> | <span v-click="4">large files, fetched whole</span> |
+| The model file, plots | <span v-click="2">Silo</span> | <span v-click="4">large files, fetched whole</span> |
 
 <br>
 
 <v-click at="5">
 
-Today MinIO gets a second job: it also stores **the data**.
+Today Silo gets a second job: it also stores **the data**.
 
 </v-click>
 
@@ -873,7 +873,7 @@ Ask: "what goes here?" before each click.
 
 ---
 
-# MinIO now stores two kinds of things
+# Silo now stores two kinds of things
 
 ```mermaid
 flowchart LR
@@ -883,9 +883,9 @@ flowchart LR
 ```
 
 - MLflow **proxies** artifacts, so your pipeline needs no storage keys.
-- DVC talks to MinIO **directly**, so it needs keys of its own.
+- DVC talks to Silo **directly**, so it needs keys of its own.
 
-The lab's Makefile passes the MinIO keys from `.env` to DVC.
+The lab's Makefile passes the Silo keys from `.env` to DVC.
 
 Nothing secret goes into a committed file.
 
@@ -901,13 +901,13 @@ Focus: the one place where the Week 2 credential story changes.
 
 ```bash {1|all}
 git checkout HEAD~1 -- data/measurements.csv.dvc   # move the pointer
-dvc checkout                                       # move the bytes
+dvc checkout                                       # move the data
 ```
 
 | | Knows about | Cannot |
 | --- | --- | --- |
 | `git checkout` | commits, pointers, code | put the data on your disk |
-| `dvc checkout` | pointers, cache, bytes | tell you which version you want |
+| `dvc checkout` | pointers, cache, data | tell you which version you want |
 
 **Git chooses the version. DVC delivers it.**
 
@@ -927,9 +927,9 @@ dvc-storage/dvcstore/files/md5/78/6c54f2770fa1e7ea5438e6e44b6486
 
 - Push the same data twice: the second push uploads **nothing**.
 - Ten branches with the same dataset store **one** copy.
-- Damaged files can be found: hash the bytes again and compare.
+- Damaged files can be found: hash the file again and compare.
 
-<ImageSlot id="w04-minio-md5" text="Screenshot: the MinIO console showing dvc-storage/dvcstore/files/md5/78/…" height="110px" />
+<ImageSlot id="w04-silo-md5" text="Screenshot: the Silo console showing dvc-storage/dvcstore/files/md5/78/…" height="110px" />
 
 <!--
 Focus: these follow from the design; nobody had to build them as features.
@@ -1175,7 +1175,7 @@ mlflow.set_tags({
 
 <!--
 Focus: the practice is "every run names the exact data". The tool calls are `mlflow.set_tags` in the lab's `log_data_version` (Exercise 6); do not show the code.
-`dvc_url` is where DVC stored those bytes, from `dvc.api.get_url`.
+`dvc_url` is where DVC stored that data, from `dvc.api.get_url`.
 -->
 
 ---
@@ -1217,7 +1217,7 @@ MLflow has its own dataset API: `mlflow.data.from_pandas` and `mlflow.log_input`
 </div>
 
 > [!WARNING]
-> MLflow stores a **description** of the data, not the data. To get the bytes back, you still need DVC.
+> MLflow stores a **description** of the data, not the data. To get the data back, you still need DVC.
 
 [^1]: MLflow docs, "Dataset tracking". https://mlflow.org/docs/latest/ml/dataset/
 
@@ -1234,10 +1234,10 @@ Measured on mlflow 3.13.0 with the lab's version 3 data (768 rows). The run page
 
 | | DVC `md5` | MLflow `digest` |
 | --- | --- | --- |
-| **Hashes** | the file's raw **bytes** | the **values** of the first 10,000 rows, the row count and the column names |
+| **Hashes** | the file's exact **content** | the **values** of the first 10,000 rows, the row count and the column names |
 | **Our file** | `a8fd7b4f0d6d1bc4e378a8f76c5fff0c` | `9a465ecc` |
 | **Same values, Windows line endings** | changes: `d2384a69…` | stays `9a465ecc` |
-| **Answers** | "are these the same bytes?" | "is this roughly the same table?" |
+| **Answers** | "is this exactly the same file?" | "is this roughly the same table?" |
 
 <v-click>
 
@@ -1342,7 +1342,7 @@ Focus: record-keeping about data is becoming a legal duty in the EU. Two of the 
 flowchart LR
     AL["@staging"] --> V["version 1"] --> RUN["run"]
     RUN -->|"git_commit →<br/>git checkout"| CODE["the training code"]
-    RUN -->|"dvc_md5 →<br/>dvc pull"| BYTES["the exact bytes"]
+    RUN -->|"dvc_md5 →<br/>dvc pull"| DATA["the exact data"]
 ```
 
 Now **every arrow is one lookup**, possible months later, by someone who never saw the project.
@@ -1474,10 +1474,10 @@ hide: true
 | Trap | What you see | What is wrong |
 | --- | --- | --- |
 | `dvc init` in a subfolder | "not tracked by any supported SCM tool" | Our labs live inside a bigger Git repo: use `--subdir` |
-| `dvc push` by hand | `NoCredentialsError` | DVC needs the MinIO keys; the Makefile passes them |
+| `dvc push` by hand | `NoCredentialsError` | DVC needs the Silo keys; the Makefile passes them |
 | `dvc checkout` | "Checkout failed" | That version is not in your cache: `dvc pull` |
 | `dvc repro` after no change | "didn't change, skipping" | Correct! Use `make link` to force one stage |
-| A file nobody changed | `dvc status`: modified | Windows line endings (CRLF): DVC 3 hashes raw bytes |
+| A file nobody changed | `dvc status`: modified | Windows line endings (CRLF): DVC 3 hashes the exact file content |
 
 <!--
 Hidden: lab-specific. Show it at the start of the lab session instead.
@@ -1497,7 +1497,7 @@ glucose,outcome\r\n    (Windows, CRLF)  ->  one md5
 glucose,outcome\n      (macOS, LF)      ->  a different md5
 ```
 
-Same rows, same columns, **different bytes**, so a different version.
+Same rows, same columns, **different line endings**, so a different version.
 
 > [!TIP]
 > Fix the line endings of data files in `.gitattributes` (`*.csv text eol=lf`), and write data files with `\n` in your code.
@@ -1517,7 +1517,7 @@ A teammate commits the new `.dvc` file and runs `git push`, but forgets `dvc pus
 <div class="flow">
   <div class="node no-shrink" style="width:13rem"><carbon-logo-git class="ic" style="color:#f05032" /><b>Git</b><br><small>the new pointer:<br>the hash of version 3</small></div>
   <div class="arrow-l fail">no file with this hash<span class="arrow">✗</span></div>
-  <div class="node no-shrink" style="width:13rem"><img class="logo" src="/minio-logo.png" alt="MinIO" /><b>Remote</b><br><small>versions 1 and 2 only</small></div>
+  <div class="node no-shrink" style="width:13rem"><ph-hard-drives class="ic" /><b>Remote</b><br><small>versions 1 and 2 only</small></div>
 </div>
 
 It works on their laptop, from their cache. On yours, `dvc pull` fails.
@@ -1550,7 +1550,7 @@ A remote key written there is shared with everyone who can read the repository, 
 [^1]: DVC docs, "remote modify". https://doc.dvc.org/command-reference/remote/modify
 
 <!--
-Focus: the same rule as Week 2's `.env`: settings in Git, secrets out of it. The lab's Makefile passes the MinIO keys as environment variables.
+Focus: the same rule as Week 2's `.env`: settings in Git, secrets out of it. The lab's Makefile passes the Silo keys as environment variables.
 Ask: how would you remove a key that is already in Git history? (You cannot, easily: rotate the key.)
 -->
 
@@ -1647,8 +1647,8 @@ Focus: the takeaways, what is still open, the lab and next week. The lecture end
 <carbon-list-checked class="icon-corner" />
 
 - **A model is code and data.** Without the exact data version, a metric describes nothing anyone can check.
-- **Name data by its content.** A hash changes when the bytes change; a path or a date does not.
-- **Keep the pointer in Git and the bytes in an object store.** One commit then fixes the code and the data together.
+- **Name data by its content.** A hash changes when the content changes; a path or a date does not.
+- **Keep the pointer in Git and the data in an object store.** One commit then fixes the code and the data together.
 - **Record the data version on every run.** Then "which models used this data?" is one query.
 - **Sometimes it is a legal duty.** A regulator can order you to delete models built from certain data, and the EU AI Act asks where training data came from.
 - **The practice outlives the tool.** DVC here; lakeFS, Git LFS or Delta Lake in your next team.
@@ -1680,15 +1680,15 @@ If asked "do we still need dvc.yaml once Prefect arrives?": yes. `dvc repro` dec
 
 | # | Exercise | What you show |
 | --- | --- | --- |
-| 1 | Initialise DVC, point it at MinIO | the remote is configured, with no keys in Git |
-| 2 | Version 1: add, read the pointer, push | four lines in Git, the bytes in MinIO |
+| 1 | Initialise DVC, point it at Silo | the remote is configured, with no keys in Git |
+| 2 | Version 1: add, read the pointer, push | four lines in Git, the data in Silo |
 | 3 | The round trip | `checkout` fails with an empty cache; `pull` restores the data |
 | 4 | New batches and time travel | three versions, and you can go back to version 1 |
 | 5 | Declare the pipeline | `dvc repro` re-runs only what a change affects |
 | 6 | Link the run to the data | runs can be found by the data they used |
 | 7 | Catch data you have not added (optional) | a run cannot name data that is not on disk |
 
-The Compose stack is Week 3's, plus one more MinIO bucket.
+The Compose stack is Week 3's, plus one more Silo bucket.
 
 <!--
 Focus: stop the Week 3 stack before the lab; both use the same ports.
@@ -1700,9 +1700,9 @@ Focus: stop the Week 3 stack before the lab; both use the same ports.
 
 <carbon-data-check class="icon-corner" />
 
-You can now prove **which** bytes trained a model.
+You can now prove **which** data trained a model.
 
-Nothing has checked whether those bytes were **any good**.
+Nothing has checked whether that data was **any good**.
 
 The data still has patients with a **glucose of 0** and a **BMI of 0**. Both are impossible. Today we gave them a permanent, versioned identity.
 
@@ -1718,7 +1718,7 @@ Focus: end on the impossible zeros. Students have seen them since Week 1.
 <carbon-forum class="icon-corner" />
 
 1. **Fraud labels keep changing for weeks.** Would you version the data every day, once a month, or at every training run? What does each choice cost?
-2. **You can prove which bytes trained a model.** Does that make the model trustworthy?
+2. **You can prove which data trained a model.** Does that make the model trustworthy?
 3. **A patient withdraws consent.** What must your storage look like for deletion to be possible at all?
 
 <!--
@@ -1732,7 +1732,7 @@ Focus: five minutes in pairs. Question 2 leads into Week 5 (the impossible zeros
 <carbon-education class="icon-corner" />
 
 - Why is Git the wrong tool for data?
-- What does a `.dvc` file contain, and where do the bytes live?
+- What does a `.dvc` file contain, and where does the data live?
 - How do you move between two versions of a dataset?
 - Which stages will `dvc repro` re-run after a change?
 - How do you link a data version to an MLflow run?

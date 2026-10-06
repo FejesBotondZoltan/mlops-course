@@ -215,11 +215,11 @@ That is our dataset's disguised-zeros quirk, left untreated until Week 5 by desi
 The `live` fixtures write to `diabetes-week3-tests` and `diabetes-classifier-tests`, so running
 the suite never pollutes the experiment or inflates the version numbers you are grading.
 
-## Verifying the storage split in MinIO
+## Verifying the storage split in Silo
 
 ```bash
-docker compose exec minio sh -c \
-  'mc alias set local http://localhost:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null && \
+docker compose exec s3 sh -c \
+  'mc alias set local http://localhost:9000 "$S3_ACCESS_KEY" "$S3_SECRET_KEY" >/dev/null && \
    mc ls --recursive local/mlflow-artifacts'
 ```
 

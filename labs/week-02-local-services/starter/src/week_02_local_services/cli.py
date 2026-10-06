@@ -21,44 +21,20 @@ def main() -> None:
     print(f"Test rows:      {len(x_test)}")
     print()
 
-    # TODO(student) — Exercise 3, step 1:
-    # Tell MLflow where the tracking server is and which experiment to use.
-    # Replace these two lines with real calls:
-    #   import mlflow
-    #   mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
-    #   mlflow.set_experiment(settings.mlflow_experiment_name)
-    print(f"MLflow tracking URI: {settings.mlflow_tracking_uri}  (not yet connected)")
-    print(f"Experiment:          {settings.mlflow_experiment_name}  (not yet created)")
-    print()
+    # TODO(student) Exercise 3, part 1: point MLflow at the tracking server in
+    # settings.mlflow_tracking_uri, and select the experiment
+    # settings.mlflow_experiment_name (set_tracking_uri, set_experiment).
 
-    # TODO(student) — Exercise 3, step 2:
-    # Wrap the training block in an MLflow run.
-    # Replace the bare function calls below with:
-    #
-    #   with mlflow.start_run():
-    #       mlflow.log_param("random_seed", settings.random_seed)
-    #       mlflow.log_param("test_size", settings.test_size)
-    #       mlflow.log_param("max_iter", settings.max_iter)
-    #
-    #       model = train_logistic_regression(x_train, y_train, settings)
-    #       metrics = evaluate_model(model, x_test, y_test)
-    #
-    #       for name, value in metrics.items():
-    #           mlflow.log_metric(name, value)
-    #
-    #       # TODO(student) — Exercise 3, step 3:
-    #       # Log the fitted pipeline as a model artifact so it lands in MinIO.
-    #       # mlflow.sklearn.log_model(model, name="model")
-    #
-    #       print("Logistic Regression metrics:")
-    #       print(json.dumps(metrics, indent=2))
-    #       print()
-    #       print(f"Run logged to: {settings.mlflow_tracking_uri}")
-
-    # Placeholder — runs without MLflow so pytest passes before Exercise 3:
+    # TODO(student) Exercise 3, part 2: put the training and evaluation below
+    # inside an MLflow run (start_run, as a `with` block). In the run:
+    #   - log the params random_seed, test_size and max_iter from `settings`;
+    #   - log each metric that evaluate_model returns;
+    #   - log the fitted pipeline as a model named "model" (mlflow.sklearn).
+    # Then delete the last print line.
+    # Tutorial: https://mlflow.org/docs/latest/ml/tracking/quickstart/
     model = train_logistic_regression(x_train, y_train, settings)
     metrics = evaluate_model(model, x_test, y_test)
-    print("Logistic Regression metrics (not yet tracked):")
+    print("Logistic Regression metrics:")
     print(json.dumps(metrics, indent=2))
     print()
-    print("Complete Exercise 3 to log this run to MLflow.")
+    print("This run is not tracked yet (Exercise 3).")
