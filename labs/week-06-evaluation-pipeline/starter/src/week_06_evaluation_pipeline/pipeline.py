@@ -241,7 +241,11 @@ def evaluate(settings: Settings) -> dict:
     # the labels, the predicted classes, the predicted probabilities of the
     # positive class, and the slice specs from `settings`.
     slices = slice_report(
-        frame, labels, model.predict(features), None, {}
+        frame,
+        labels,
+        model.predict(features),
+        model.predict_proba(features)[:, 1],
+        settings.slice_specs,
     )
 
     settings.metrics_path.parent.mkdir(parents=True, exist_ok=True)

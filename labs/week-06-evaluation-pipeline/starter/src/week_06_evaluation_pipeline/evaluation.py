@@ -95,7 +95,32 @@ def group_scores(y_true, y_pred, y_prob, groups) -> pd.DataFrame:
     #     with `roc_auc_score` in a second MetricFrame, under the name roc_auc, and
     #     join its `by_group` to the first table. Skip it when `y_prob` is None.
     # Reference: https://fairlearn.org/main/user_guide/assessment/perform_fairness_assessment.html
-    return pd.DataFrame()
+    metrics = {
+        "accuracy": accuracy_score,
+        "precision": partial(precision_score, zero_division=0),
+        "recall": partial(recall_score, zero_division=0),
+        "f1": partial(f1_score, zero_division=0),
+        "selection_rate": selection_rate,
+        "fpr": false_positive_rate,
+    }
+    frame = MetricFrame(
+        metrics=metrics,
+        y_true=y_true,
+        y_pred=y_pred,
+        sensitive_features=groups,
+    )
+    table = frame.by_group
+
+    if y_prob is not None:
+        auc_frame = MetricFrame(
+            metrics={"roc_auc": roc_auc_score},
+            y_true=y_true,
+            y_pred=y_prob,
+            sensitive_features=groups,
+        )
+        table = table.join(auc_frame.by_group)
+
+    return table
 
 
 METRIC_KEYS = ("accuracy", "precision", "recall", "f1", "roc_auc", "selection_rate", "fpr")

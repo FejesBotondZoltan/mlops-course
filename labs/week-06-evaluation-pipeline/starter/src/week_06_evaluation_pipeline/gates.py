@@ -145,7 +145,7 @@ def _regression_checks(metrics: dict, baseline: dict, rules: dict) -> tuple[list
     # TODO(student) Exercise 3: set `dropped` to True when `delta` is a larger drop
     # than the champion comparison tolerates (`max_drop`), and to False otherwise.
     # `delta` is negative when this model is worse than the champion.
-    dropped = False
+    dropped = delta < -float(max_drop)
     return [
         _check(
             id=f"regression.{primary}",
@@ -209,6 +209,11 @@ def _slice_checks(metrics: dict, slices: dict, rules: dict) -> list[dict]:
             # "support 19 < min_support 20" or "positives 1 < min_positives 10".
             # Leave it None when the group is large enough to judge.
             too_small = None
+            if min_support and m["n"] < min_support:
+                too_small = f"support {m['n']} < min_support {min_support}"
+            elif min_positives and m["n_positives"] < min_positives:
+                too_small = f"positives {m['n_positives']} < min_positives {min_positives}"
+
             if too_small:
                 out.append(dict(check, status=SKIPPED, reason=too_small))
                 continue
@@ -223,6 +228,10 @@ def _slice_checks(metrics: dict, slices: dict, rules: dict) -> list[dict]:
             # Write the F1 with 4 decimals, and say "below the aggregate" in the gap
             # reason; the tests look for both.
             violations: list[str] = []
+            if min_f1 is not None and m["f1"] is not None and float(m["f1"]) < float(min_f1):
+                violations.append(f"f1 {float(m['f1']):.4f} is below min_f1 {float(min_f1):.4f}")
+            if max_gap is not None and gap is not None and gap > float(max_gap):
+                violations.append(f"gap {gap:.4f} is below the aggregate, past {float(max_gap):.4f}")
 
             out.append(
                 dict(
@@ -281,7 +290,7 @@ def _fairness_checks(slices: dict, rules: dict) -> list[dict]:
                 continue
             # TODO(student) Exercise 5: set `exceeded` to True when the observed gap
             # is above the limit this axis configures, and to False otherwise.
-            exceeded = False
+            exceeded = float(observed) > float(limit)
             out.append(
                 _check(
                     id=f"fairness.{axis}.{key}",

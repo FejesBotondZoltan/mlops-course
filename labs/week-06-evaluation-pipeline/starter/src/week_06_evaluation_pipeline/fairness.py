@@ -31,7 +31,18 @@ def rates_by_group(y_true, y_pred, groups) -> pd.DataFrame:
     # sensitive features and three metrics, named selection_rate, tpr and fpr:
     # fairlearn's `selection_rate`, `true_positive_rate` and `false_positive_rate`.
     # Return its `by_group` table. `group_scores` in evaluation.py has the same shape.
-    return pd.DataFrame()
+    metrics = {
+        "selection_rate": selection_rate,
+        "tpr": true_positive_rate,
+        "fpr": false_positive_rate,
+    }
+    frame = MetricFrame(
+        metrics=metrics,
+        y_true=y_true,
+        y_pred=y_pred,
+        sensitive_features=groups,
+    )
+    return frame.by_group
 
 
 def gaps(y_true, y_pred, groups) -> dict:
@@ -43,7 +54,20 @@ def gaps(y_true, y_pred, groups) -> dict:
     #   fpr_gap: the false positive rate difference;
     #   equalized_odds_difference: the equalized odds difference.
     # Reference: https://fairlearn.org/main/user_guide/assessment/common_fairness_metrics.html
-    return {}
+    return {
+        "selection_rate_gap": demographic_parity_difference(
+            y_true=y_true, y_pred=y_pred, sensitive_features=groups
+        ),
+        "tpr_gap": equal_opportunity_difference(
+            y_true=y_true, y_pred=y_pred, sensitive_features=groups
+        ),
+        "fpr_gap": false_positive_rate_difference(
+            y_true=y_true, y_pred=y_pred, sensitive_features=groups
+        ),
+        "equalized_odds_difference": equalized_odds_difference(
+            y_true=y_true, y_pred=y_pred, sensitive_features=groups
+        ),
+    }
 
 
 def _r(value):

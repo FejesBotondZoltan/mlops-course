@@ -1,0 +1,231 @@
+schema: '2.0'
+stages:
+  validate:
+    cmd: uv run python src/main.py validate
+    deps:
+    - path: data/measurements.csv
+      hash: md5
+      md5: a8fd7b4f0d6d1bc4e378a8f76c5fff0c
+      size: 31750
+    - path: src/week_06_evaluation_pipeline/pipeline.py
+      hash: md5
+      md5: 3274621b3d28400bbc67d4cf2692447a
+      size: 15247
+    - path: src/week_06_evaluation_pipeline/schemas.py
+      hash: md5
+      md5: deba0228a30a5ee015ce41d55d09e4c5
+      size: 4602
+    - path: src/week_06_evaluation_pipeline/validation.py
+      hash: md5
+      md5: f7b65457fac76e5f1b0ef838fdb18792
+      size: 5757
+    outs:
+    - path: reports/validation.json
+      hash: md5
+      md5: a93c68efa227920689933ab1a8130a2f
+      size: 595
+  prepare:
+    cmd: uv run python src/main.py prepare
+    deps:
+    - path: data/measurements.csv
+      hash: md5
+      md5: a8fd7b4f0d6d1bc4e378a8f76c5fff0c
+      size: 31750
+    - path: reports/validation.json
+      hash: md5
+      md5: a93c68efa227920689933ab1a8130a2f
+      size: 595
+    - path: src/week_06_evaluation_pipeline/data.py
+      hash: md5
+      md5: 83cb0d86b162802a02e5eabe07efc745
+      size: 2323
+    - path: src/week_06_evaluation_pipeline/pipeline.py
+      hash: md5
+      md5: 3274621b3d28400bbc67d4cf2692447a
+      size: 15247
+    params:
+      params.yaml:
+        prepare.test_size: 0.25
+        random_seed: 42
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: c0893fb60844c5f31b0f5b7c2e9df865
+      size: 8041
+    - path: data/processed/train.csv
+      hash: md5
+      md5: d9eba76cf921c13f5af2032d09a12f35
+      size: 23818
+  train:
+    cmd: uv run python src/main.py train
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: d9eba76cf921c13f5af2032d09a12f35
+      size: 23818
+    - path: src/week_06_evaluation_pipeline/dvc_link.py
+      hash: md5
+      md5: 98075b0c4f72c2f071e8b412a293be28
+      size: 2505
+    - path: src/week_06_evaluation_pipeline/model.py
+      hash: md5
+      md5: c58e6f765d5ee4ce0f077332eb42f368
+      size: 3184
+    - path: src/week_06_evaluation_pipeline/pipeline.py
+      hash: md5
+      md5: 3274621b3d28400bbc67d4cf2692447a
+      size: 15247
+    - path: src/week_06_evaluation_pipeline/schemas.py
+      hash: md5
+      md5: deba0228a30a5ee015ce41d55d09e4c5
+      size: 4602
+    - path: src/week_06_evaluation_pipeline/validation.py
+      hash: md5
+      md5: f7b65457fac76e5f1b0ef838fdb18792
+      size: 5757
+    params:
+      params.yaml:
+        random_seed: 42
+        train.C: 1.0
+        train.family: logreg
+        train.impute_strategy: median
+        train.max_iter: 1000
+        train.n_estimators: 100
+    outs:
+    - path: models/mlflow_run_id.json
+      hash: md5
+      md5: ea94c2a26e0109af4ae58b16243f3b55
+      size: 50
+    - path: models/model.pkl
+      hash: md5
+      md5: 0cb71718f4600c3b4b65a5c878ec4c7f
+      size: 2273
+  evaluate:
+    cmd: uv run python src/main.py evaluate
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: c0893fb60844c5f31b0f5b7c2e9df865
+      size: 8041
+    - path: models/mlflow_run_id.json
+      hash: md5
+      md5: ea94c2a26e0109af4ae58b16243f3b55
+      size: 50
+    - path: models/model.pkl
+      hash: md5
+      md5: 0cb71718f4600c3b4b65a5c878ec4c7f
+      size: 2273
+    - path: src/week_06_evaluation_pipeline/evaluation.py
+      hash: md5
+      md5: bf6126aa9815333931d811ac1cb5a721
+      size: 9213
+    - path: src/week_06_evaluation_pipeline/fairness.py
+      hash: md5
+      md5: a8ea270ae85fe750dc31e1534f9a8309
+      size: 5503
+    - path: src/week_06_evaluation_pipeline/model.py
+      hash: md5
+      md5: c58e6f765d5ee4ce0f077332eb42f368
+      size: 3184
+    - path: src/week_06_evaluation_pipeline/pipeline.py
+      hash: md5
+      md5: 3274621b3d28400bbc67d4cf2692447a
+      size: 15247
+    - path: src/week_06_evaluation_pipeline/schemas.py
+      hash: md5
+      md5: deba0228a30a5ee015ce41d55d09e4c5
+      size: 4602
+    - path: src/week_06_evaluation_pipeline/validation.py
+      hash: md5
+      md5: f7b65457fac76e5f1b0ef838fdb18792
+      size: 5757
+    params:
+      params.yaml:
+        evaluation:
+          slices:
+            age_band:
+              column: age
+              kind: bins
+              bins:
+              - 21
+              - 30
+              - 40
+              - 50
+              - .inf
+              labels:
+              - 21-29
+              - 30-39
+              - 40-49
+              - 50+
+            bmi_band:
+              column: bmi
+              kind: bins
+              bins:
+              - 0
+              - 25
+              - 30
+              - .inf
+              labels:
+              - under_normal
+              - overweight
+              - obese
+              missing_label: missing
+            insulin_missing:
+              column: insulin
+              kind: missing_flag
+              labels:
+              - insulin_present
+              - insulin_missing
+        random_seed: 42
+    outs:
+    - path: metrics/metrics.json
+      hash: md5
+      md5: 4fc17194f05e281582226f16cc98fbbf
+      size: 112
+    - path: metrics/slices.json
+      hash: md5
+      md5: 5763870f2c2f3df7324391d18a0fbc03
+      size: 5138
+  gate:
+    cmd: uv run python src/main.py gate
+    deps:
+    - path: metrics/baseline.json
+      hash: md5
+      md5: 60892b96fbead386df6c3fc2bb60cf38
+      size: 266
+    - path: metrics/metrics.json
+      hash: md5
+      md5: 4fc17194f05e281582226f16cc98fbbf
+      size: 112
+    - path: metrics/slices.json
+      hash: md5
+      md5: 5763870f2c2f3df7324391d18a0fbc03
+      size: 5138
+    - path: src/week_06_evaluation_pipeline/gates.py
+      hash: md5
+      md5: 2abbef8d1e04b64d7549323764bf9b62
+      size: 14562
+    params:
+      params.yaml:
+        acceptance:
+          criteria_version: 1.0.0
+          minimum:
+            accuracy: 0.7
+            f1: 0.55
+            roc_auc: 0.75
+          regression:
+            primary_metric: f1
+            max_drop: 0.05
+            also_report:
+            - accuracy
+            - roc_auc
+          slice_rules:
+            min_support: 20
+            min_positives: 5
+            min_f1: 0.4
+            max_f1_gap: 0.25
+    outs:
+    - path: reports/gate.json
+      hash: md5
+      md5: e567e4a9181a7c0a617b5af4cc7c5c06
+      size: 4225
