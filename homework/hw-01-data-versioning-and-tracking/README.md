@@ -1,30 +1,28 @@
 # HW 1: Data Versioning and Experiment Tracking
 
-**Released:** Week 5 · **Due:** 23:59 (Budapest) on Sunday of **Week 8** (1 November)
-**Estimated effort:** 8–10 hours
-**Weight:** see `docs/syllabus.md`
-**Builds on:** Week 1 (dev environment), Week 2 (local services), Week 3 (MLflow), Week 4 (DVC)
+| | |
+| --- | --- |
+| **Released** | Week 5 |
+| **Due** | 23:59 (Budapest) on Sunday of **Week 8** (1 November) |
+| **Estimated effort** | 8–10 hours |
+| **Builds on** | Week 1 (dev environment), Week 2 (local services), Week 3 (MLflow), Week 4 (DVC) |
 
 ---
 
 ## Objective
 
-Turn your project repository into a **reproducible MLOps project**: one command brings up its
-infrastructure, one command runs its pipeline, the dataset is versioned by content hash with the
-data in object storage, every training run is recorded with its parameters and metrics, and the
-model that came out of the best run is registered under a name and an alias that a colleague can
-resolve.
+Turn your project repository into a **reproducible MLOps project**:
 
-The capability this proves is a single sentence: **someone else can clone your repository, bring
-it up, and establish exactly which data produced which model.** Everything below exists to make
-that sentence checkable by running commands.
+- One command brings up its infrastructure.
+- One command runs its pipeline.
+- The dataset is versioned by content hash and stored in object storage.
+- Every training run records the model's parameters, metrics, and the dataset version it was trained on.
+- The best model is registered under a name and alias that a colleague can resolve.
 
-This is the first of five assignments that build on the same repository — the one you created
+This is the first of five assignments that build on the same repository - the one you created
 from `project-template/` in the Week 2 *Define Project Topic* milestone, with your own dataset.
-If your proposal was not approved, use the Pima diabetes dataset; that is not a penalty.
 
-You will use only tools from Labs 1–4. **No Pandera, no data validation** — that is HW2, and
-adding it early will not earn marks.
+You will use only tools from Labs 1–4. **No Pandera, no data validation.**
 
 ---
 
@@ -33,7 +31,7 @@ adding it early will not earn marks.
 Each requirement is independently checkable. The grader runs commands for R1–R7 and reads for
 R8–R10.
 
-### R1 — A reproducible environment (8 points)
+### R1: A reproducible environment (8 points)
 
 - The repository is a `uv` project with `pyproject.toml` **and a committed `uv.lock`**.
 - `uv sync --all-groups` succeeds from a fresh clone.
@@ -41,18 +39,18 @@ R8–R10.
   infrastructure must skip, not fail).
 - `README.md` states the exact commands to install, configure and run.
 
-### R2 — One-command local services (10 points)
+### R2: One-command local services (10 points)
 
 - A `compose.yaml` bringing up **Postgres, Silo and MLflow**, adapted from the Week 2 lab.
 - `docker compose up -d --wait` succeeds and all services report healthy.
-- An explicit top-level `name:` — otherwise Compose derives the project name from your
+- An explicit top-level `name:` - otherwise Compose derives the project name from your
   directory and collides with the course labs.
 - Host ports documented. If you keep the labs' 55xx block, say so in the README, because it
   means only one stack can run at a time.
 - **No secrets in Git.** Credentials come from `.env`, which is git-ignored; `.env.example`
   is committed with placeholder values.
 
-### R3 — DVC tracking your dataset (12 points)
+### R3: DVC tracking your dataset (12 points)
 
 - `dvc init --subdir` (or plain `dvc init` if your project repo has its own root) is done, and
   `.dvc/config` **is committed**.
@@ -61,7 +59,7 @@ R8–R10.
 - The README quotes your pointer's `md5` and `size`, and states the row and column count of the
   data it names.
 
-### R4 — Silo as the DVC remote, working both ways (12 points)
+### R4: Silo as the DVC remote, working both ways (12 points)
 
 - A default DVC remote pointing at a Silo bucket over `endpointurl`.
 - `dvc push` uploads the data; the object is visible in the Silo console under
@@ -72,7 +70,7 @@ R8–R10.
 - **`.dvc/config` contains no credentials.** If you used `dvc remote modify --local`, confirm
   `.dvc/config.local` is git-ignored and not in the repository.
 
-### R5 — At least two dataset versions (10 points)
+### R5: At least two dataset versions (10 points)
 
 - Two distinct versions of your dataset, each with its own commit and its own pointer md5. How
   you produce the second is up to you: append rows, add a feature, fix an encoding, or split
@@ -80,18 +78,18 @@ R8–R10.
 - Demonstrate moving between them: `git checkout <commit> -- <your>.dvc` followed by
   `dvc checkout`, with the md5 before and after.
 
-### R6 — A declared pipeline (12 points)
+### R6: A declared pipeline (12 points)
 
 - A `dvc.yaml` with at least three stages: **prepare → train → evaluate**.
 - Every `cmd` is something you can also run by hand.
 - Source files appear in `deps`, so editing your training code makes `train` stale.
-- Hyperparameters live in **`params.yaml`**, not in `.env` — DVC can only hash a file.
+- Hyperparameters live in **`params.yaml`**, not in `.env` - DVC can only hash a file.
 - `metrics/metrics.json` is a `cache: false` metrics output, so it is committed.
 - `dvc.lock` **is committed**.
 - Running `dvc repro` twice re-runs nothing the second time. Show that output.
 - Change one parameter and show that **only the affected stages** re-run.
 
-### R7 — MLflow tracking and the model registry (16 points)
+### R7: MLflow tracking and the model registry (16 points)
 
 - Runs land in a named experiment on the containerised MLflow server, with **parameters,
   metrics and a logged model** (`mlflow.sklearn.log_model`).
@@ -102,18 +100,17 @@ R8–R10.
 - The registered version's `run_id` is **populated**: it is the link from the registry back to
   the run, and without it the whole chain breaks. Registering from `runs:/<run_id>/model` (as
   the labs do) or from the `models:/<model_id>` URI that `log_model` returns both populate it
-  on the course's MLflow version; a version created from a bare artifact path does not. Show
-  the `run_id` in `docs/hw1.md`.
+  on the course's MLflow version. Show the `run_id` in `docs/hw1.md`.
 - Every run carries a `git_commit` tag.
 
-### R8 — The data version on the run (10 points)
+### R8: The data version on the run (10 points)
 
 - Each training run records **which data it trained on**: a tag carrying your dataset's DVC md5
   (`dvc_md5` or equivalent), plus the remote URI.
-- A short script or CLI subcommand that, given a data md5, lists the runs trained on it — the
+- A short script or CLI subcommand that, given a data md5, lists the runs trained on it - the
   Week 4 `runs-for-data` pattern. Show its output.
 
-### R9 — The traceability chain, written down (6 points)
+### R9: The traceability chain, written down (6 points)
 
 In `docs/hw1.md`, walk the chain for your registered model, with the real values from your
 project:
@@ -124,12 +121,11 @@ alias -> model version -> run id -> params + metrics -> git commit -> data md5 -
 
 Every arrow must be something the grader could follow themselves.
 
-### R10 — README and reflection (4 points)
+### R10 - README and reflection (4 points)
 
 - `README.md`: what the project predicts, how to run it, what the host ports are.
 - `docs/hw1.md`: the evidence for R3–R9, plus **one paragraph** on the hardest thing you hit
-  and how you diagnosed it. A specific error message and what it turned out to mean is worth
-  more than a general reflection.
+  and how you diagnosed it.
 
 ---
 
@@ -171,10 +167,6 @@ dvc metrics show
 dvc dag
 ```
 
-Anything that requires a step not documented in your README counts as not working. If a step
-genuinely cannot work on a grader's machine — a large dataset, a slow download — say so
-explicitly in `docs/hw1.md` and give the workaround.
-
 ---
 
 ## Grading
@@ -197,17 +189,14 @@ explicitly in `docs/hw1.md` and give the workaround.
 
 - credentials committed anywhere (`.env`, `.dvc/config`, hardcoded in source): **−20**
 - `uv.lock` or `dvc.lock` missing: **−10** each
-- the data file committed to Git instead of DVC-tracked: **−10**
+- the data file not DVC-tracked: **−10**
 - a registered model version with an empty `run_id`: **−8**
 - `uv run pytest` failing on a fresh clone with Docker stopped: **−8**
 
-**Tooling scope.** Requirements are satisfiable with Labs 1–4 only. Pandera, evaluation
-thresholds, Prefect, KServe, Prometheus and Evidently all belong to later assignments; using
-them early earns nothing and costs you time you will want.
+**Tooling scope.** Requirements are satisfiable with Labs 1–4 only.
 
 **AI tool policy.** Assistants are permitted and encouraged. You must be able to explain every
-line you submit, and you may be asked to. "The assistant wrote it" is not an answer to "why is
-`run_id` empty".
+line you submit, and you may be asked to.
 
 ---
 
@@ -215,15 +204,7 @@ line you submit, and you may be asked to. "The assistant wrote it" is not an ans
 
 - **Do R4 early and do it properly.** The fresh-clone `dvc pull` is where most submissions
   break, and it always breaks for one of two reasons: the pointer was never committed, or the
-  data was never pushed. Test it on day two, not the night before.
-- **Read the lab READMEs' troubleshooting tables before debugging from scratch.** The MLflow
-  `--allowed-hosts` requirement, the `dvc init --subdir` error, the benign
-  "no artifacts at artifact path 'model'" warning on registration, and the Compose project-name
-  collision are all documented there with their exact error messages.
-- **Keep your dataset small.** A few MB is plenty. Every `dvc push`/`pull` cycle you run while
-  developing costs you time proportional to its size, and nothing in this assignment is graded
-  on scale.
-- **`docs/hw1.md` is where the marks are.** Six of the ten requirements are partly or wholly
-  read rather than run. Paste real command output; do not paraphrase it.
+  data was never pushed.
+- **Read the lab READMEs' troubleshooting tables before debugging from scratch.** Many errors are documented there with their exact error messages and solutions.
 - **Commit as you go.** R5 needs two dataset versions in two commits, and your history is
   easier to produce as you work than to reconstruct afterwards.
