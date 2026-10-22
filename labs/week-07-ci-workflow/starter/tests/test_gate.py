@@ -17,6 +17,8 @@ from week_07_ci_workflow.validation import read_report
 
 # TODO(student) Exercise 3: mark this module's layer with `pytestmark`:
 # unit, data, eval or integration.
+# Data: az adatkontraktus és a bemeneti adatkapu szűrő viselkedését vizsgálja hibás adatok esetén.
+pytestmark = pytest.mark.data
 
 
 @pytest.fixture

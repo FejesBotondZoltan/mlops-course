@@ -24,6 +24,10 @@ from week_07_ci_workflow.pipeline import GateFailed
 
 # TODO(student) Exercise 3: mark this module's layer with `pytestmark`:
 # unit, data, eval or integration.
+# Eval: a modellkapu döntési logikáját, a baseline-összehasonlítást és a NO-GO tiltást ellenőrzi.
+pytestmark = pytest.mark.eval
+
+
 
 GOOD_METRICS = {
     "accuracy": 0.7656, "precision": 0.6964, "recall": 0.5821,

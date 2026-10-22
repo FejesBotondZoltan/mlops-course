@@ -19,6 +19,9 @@ from week_07_ci_workflow.validation import (
 
 # TODO(student) Exercise 3: mark this module's layer with `pytestmark`:
 # unit, data, eval or integration.
+# Adat: az adathibák észlelését, az adatszintű sentinel-transzformációt és a validációs riportot ellenőrzi.
+pytestmark = pytest.mark.data
+
 
 # Measured on datasets/quality/broken_batch.csv (60 rows, 4 faults).
 EXPECTED_FAILURE_CASES = 7

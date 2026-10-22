@@ -16,6 +16,8 @@ from week_07_ci_workflow.evaluation import (
 
 # TODO(student) Exercise 3: mark this module's layer with `pytestmark`:
 # unit, data, eval or integration.
+#Eval: adatszeletek képzését és csoportszintű metrikák helyességét ellenőrzi.
+pytestmark = pytest.mark.eval
 
 AGE_SPEC = {
     "column": "age",

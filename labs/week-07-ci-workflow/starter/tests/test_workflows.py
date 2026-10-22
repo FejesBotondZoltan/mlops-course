@@ -53,7 +53,6 @@ def test_workflows_live_in_a_github_workflows_directory():
 # ── Triggers ─────────────────────────────────────────────────────────────────
 
 
-@pytest.mark.skip(reason="Exercise 4: delete this marker when the workflow is written.")
 def test_ci_is_triggered_by_code_changing(ci):
     fired_by = triggers(ci)
     assert "push" in fired_by
@@ -81,12 +80,10 @@ def test_ct_schedule_declares_a_cron(ct):
 # ── The job graph ────────────────────────────────────────────────────────────
 
 
-@pytest.mark.skip(reason="Exercise 4: delete this marker when the workflow is written.")
 def test_ci_has_the_three_jobs(ci):
     assert set(ci["jobs"]) >= {"lint", "test", "pipeline"}
 
 
-@pytest.mark.skip(reason="Exercise 4: delete this marker when the workflow is written.")
 def test_pipeline_waits_for_lint_and_tests(ci):
     """The pipeline job runs only after lint and the tests pass."""
     needs = ci["jobs"]["pipeline"]["needs"]
@@ -94,14 +91,12 @@ def test_pipeline_waits_for_lint_and_tests(ci):
     assert set(needs) == {"lint", "test"}
 
 
-@pytest.mark.skip(reason="Exercise 4: delete this marker when the workflow is written.")
 def test_the_test_job_fans_out_over_the_pyramid_layers(ci):
     """One test job per layer."""
     matrix = ci["jobs"]["test"]["strategy"]["matrix"]
     assert set(matrix["layer"]) == {"unit", "data", "eval"}
 
 
-@pytest.mark.skip(reason="Exercise 4: delete this marker when the workflow is written.")
 def test_the_matrix_does_not_fail_fast(ci):
     """One failing layer does not cancel the others."""
     assert ci["jobs"]["test"]["strategy"]["fail-fast"] is False
@@ -158,7 +153,6 @@ def test_every_make_target_a_workflow_calls_actually_exists(ci, ct):
             )
 
 
-@pytest.mark.skip(reason="Exercise 4: delete this marker when the workflow is written.")
 def test_ci_runs_one_target_per_pyramid_layer(ci):
     """The matrix calls the per-layer test targets."""
     targets = make_targets(ci)
@@ -207,7 +201,6 @@ def test_workflows_run_inside_this_lab(ci, ct):
         )
 
 
-@pytest.mark.skip(reason="Exercise 4: delete this marker when the workflow is written.")
 def test_the_evidence_is_uploaded_even_when_the_gate_refuses(ci):
     """The artifacts are uploaded even when the gate fails."""
     steps = ci["jobs"]["pipeline"]["steps"]

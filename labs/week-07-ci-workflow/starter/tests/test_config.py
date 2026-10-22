@@ -4,7 +4,8 @@ from week_07_ci_workflow.config import Settings, load_settings
 
 # TODO(student) Exercise 3: mark this module's layer with `pytestmark`:
 # unit, data, eval or integration.
-
+# Unit: belső konfigurációkezelést, alapértelmezett értékeket és validációt ellenőriz memóriában
+pytestmark = pytest.mark.unit
 
 def test_settings_defaults() -> None:
     """The Settings dataclass ships with the documented defaults."""

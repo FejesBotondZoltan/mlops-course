@@ -9,6 +9,9 @@ from week_07_ci_workflow.data import FEATURE_COLUMNS
 
 # TODO(student) Exercise 3: mark this module's layer with `pytestmark`:
 # unit, data, eval or integration.
+# Unit: az inferencia bemeneti validációját és adatformázási függvényeit ellenőrzi.
+pytestmark = pytest.mark.unit
+
 
 
 def test_the_example_payload_is_legal():
