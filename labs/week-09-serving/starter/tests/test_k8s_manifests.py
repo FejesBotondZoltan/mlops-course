@@ -35,26 +35,22 @@ def _container(deployment: dict) -> dict:
 # ── A Deployment, a Service and probes (Exercise 5) ─────────────────────────
 
 
-@pytest.mark.skip(reason="Exercise 5 — write the Deployment and the Service, then delete this skip marker.")
 def test_the_manifests_are_the_kinds_they_claim(deployment, service):
     assert deployment["kind"] == "Deployment"
     assert service["kind"] == "Service"
 
 
-@pytest.mark.skip(reason="Exercise 5 — write the Deployment and the Service, then delete this skip marker.")
 def test_more_than_one_replica(deployment):
     """When one pod stops, the Service needs another pod to send traffic to."""
     assert deployment["spec"]["replicas"] >= 2
 
 
-@pytest.mark.skip(reason="Exercise 5 — write the Deployment and the Service, then delete this skip marker.")
 def test_the_deployment_selector_matches_its_own_template(deployment):
     assert deployment["spec"]["selector"]["matchLabels"].items() <= (
         deployment["spec"]["template"]["metadata"]["labels"].items()
     )
 
 
-@pytest.mark.skip(reason="Exercise 5 — write the Deployment and the Service, then delete this skip marker.")
 def test_the_service_selector_matches_the_pod_labels(deployment, service):
     """A mismatch gives no error: the Service has no endpoints, and port-forward hangs."""
     pod_labels = deployment["spec"]["template"]["metadata"]["labels"]
@@ -65,7 +61,6 @@ def test_the_service_selector_matches_the_pod_labels(deployment, service):
     )
 
 
-@pytest.mark.skip(reason="Exercise 5 — write the Deployment and the Service, then delete this skip marker.")
 def test_a_side_loaded_image_is_not_pulled(deployment):
     """An image copied in with `kind load docker-image` is in no registry."""
     assert _container(deployment).get("imagePullPolicy") == "IfNotPresent", (
@@ -74,7 +69,6 @@ def test_a_side_loaded_image_is_not_pulled(deployment):
     )
 
 
-@pytest.mark.skip(reason="Exercise 5 — write the Deployment and the Service, then delete this skip marker.")
 def test_nothing_from_a_later_week_is_in_the_manifests():
     """This week: a Deployment, a Service and probes. Ingress and autoscaling are out of scope."""
     forbidden_kinds = {"Ingress", "HorizontalPodAutoscaler", "InferenceService",
@@ -102,7 +96,6 @@ def test_nothing_from_a_later_week_is_in_the_manifests():
 
 
 
-@pytest.mark.skip(reason="Exercise 5 — add the probes, then delete this skip marker.")
 def test_both_probes_exist_and_call_a_real_route(deployment):
     """A probe on a path the app does not serve never passes."""
     from week_09_serving.api import create_app
@@ -116,7 +109,6 @@ def test_both_probes_exist_and_call_a_real_route(deployment):
         assert path in routes, f"{probe} calls {path}, which the app does not serve"
 
 
-@pytest.mark.skip(reason="Exercise 5 — add the probes, then delete this skip marker.")
 def test_the_probes_use_the_named_container_port(deployment):
     container = _container(deployment)
     name = container["ports"][0].get("name")
@@ -125,7 +117,6 @@ def test_the_probes_use_the_named_container_port(deployment):
         assert container[probe]["httpGet"]["port"] == name
 
 
-@pytest.mark.skip(reason="Exercise 5 — add the probes, then delete this skip marker.")
 def test_liveness_is_slower_to_fire_than_readiness(deployment):
     """Liveness restarts the container, so it must wait longer than readiness."""
     container = _container(deployment)

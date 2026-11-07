@@ -93,27 +93,43 @@ def create_app() -> FastAPI:
     app.state.model = joblib.load(model_path) if model_path.exists() else None
     app.state.baked = baked
 
-    # TODO(student) Exercise 2: add both endpoints inside create_app.
-    #
-    # For GET /health, return a HealthResponse.
-    #   - If `app.state.model` is None, raise an HTTPException with status 503
-    #     and include "not ready" in its detail.
-    #   - Otherwise, return status "ok", the schema version, and the values in
-    #     `baked`: model_version, run_id, gate_verdict and `source` as model_source.
-    #
-    # For POST /predict, take a PredictionRequest and return a PredictionResponse.
-    #   - FastAPI checks the request types before your function runs. Check the
-    #     values with `validate_payload`.
-    #   - If the report did not pass, raise an HTTPException with status 422.
-    #     Put the report's `by_check` under "failures" and SCHEMA_VERSION under
-    #     "schema_version" in its detail dict.
-    #   - Build a frame with `payload_to_frame`, select FEATURE_COLUMNS in that
-    #     order and score it with the model's `predict_proba`.
-    #   - Return the probability of class 1 rounded to 4 decimals. Set prediction
-    #     to 1 when the unrounded probability is at least 0.5. Include model_version
-    #     from `baked` and SCHEMA_VERSION as schema_version.
-    # Reference: https://fastapi.tiangolo.com/tutorial/body/ and
-    # https://fastapi.tiangolo.com/tutorial/handling-errors/
+    @app.get("/health", response_model=HealthResponse)
+    def health() -> HealthResponse:
+        if app.state.model is None:
+            raise HTTPException(status_code=503, detail="not ready: no model loaded")
+        return HealthResponse(
+            status="ok",
+            model_version=baked.get("model_version"),
+            run_id=baked.get("run_id"),
+            gate_verdict=baked.get("gate_verdict"),
+            schema_version=SCHEMA_VERSION,
+            model_source=baked.get("source", "working tree (not baked)"),
+        )
+
+    @app.post("/predict", response_model=PredictionResponse)
+    def predict(request: PredictionRequest) -> PredictionResponse:
+        payload = request.model_dump()
+        report = validate_payload(payload)
+        if not report.get("passed"):
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "failures": report.get("by_check", {}),
+                    "schema_version": SCHEMA_VERSION,
+                },
+            )
+        frame = payload_to_frame(payload)
+        # Convert sentinel zeros to nulls, select features in contract order,
+        # then cast to plain float64 so sklearn's SimpleImputer gets NaN not pd.NA.
+        from .validation import to_nullable
+        numeric = to_nullable(frame)[list(FEATURE_COLUMNS)].astype("float64")
+        proba = float(app.state.model.predict_proba(numeric)[0][1])
+        return PredictionResponse(
+            prediction=1 if proba >= 0.5 else 0,
+            probability=round(proba, 4),
+            model_version=baked.get("model_version"),
+            schema_version=SCHEMA_VERSION,
+        )
 
     return app
 

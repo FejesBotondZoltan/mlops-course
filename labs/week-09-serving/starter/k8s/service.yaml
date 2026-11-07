@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: diabetes-api
+  labels:
+    app: diabetes-api
+spec:
+  selector:
+    app: diabetes-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
