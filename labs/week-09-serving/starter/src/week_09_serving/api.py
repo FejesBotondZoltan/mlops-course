@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 import joblib
-from fastapi import FastAPI, HTTPException  # noqa: F401 -- you need HTTPException in Exercise 2
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from .config import load_settings
@@ -20,24 +20,22 @@ from .schemas import FEATURE_COLUMNS, SCHEMA_VERSION  # noqa: F401
 
 
 class PredictionRequest(BaseModel):
-    """One patient. Pydantic checks that every field is present and is a number or null.
+    """One patient, with the fields of `PredictionInput`. The five sentinel fields may be null.
 
-    The fields are the same as in `PredictionInput` (schemas.py), and the same five
-    may be null: a value that was not measured. A test checks that the two agree.
-    The value rules stay in `PredictionInput`.
+    Pydantic checks the types here; `PredictionInput` checks the values.
     """
 
     # An unknown field is a 422, as `strict = True` makes it in the contract.
     model_config = ConfigDict(extra="forbid")
 
-    pregnancies: float = Field(..., description="Number of pregnancies (0 is a real value)")
-    glucose: float | None = Field(..., description="Plasma glucose. null if not measured; 0 is not allowed")
-    blood_pressure: float | None = Field(..., description="Diastolic blood pressure (mm Hg), or null")
-    skin_thickness: float | None = Field(..., description="Triceps skin fold thickness (mm), or null")
-    insulin: float | None = Field(..., description="2-hour serum insulin (mu U/ml), or null")
-    bmi: float | None = Field(..., description="Body mass index, or null")
-    diabetes_pedigree: float = Field(..., description="Diabetes pedigree function")
-    age: float = Field(..., description="Age in years")
+    pregnancies: float = Field(description="Number of pregnancies (0 is a real value)")
+    glucose: float | None = Field(description="Plasma glucose. null if not measured; 0 is not allowed")
+    blood_pressure: float | None = Field(description="Diastolic blood pressure (mm Hg), or null")
+    skin_thickness: float | None = Field(description="Triceps skin fold thickness (mm), or null")
+    insulin: float | None = Field(description="2-hour serum insulin (mu U/ml), or null")
+    bmi: float | None = Field(description="Body mass index, or null")
+    diabetes_pedigree: float = Field(description="Diabetes pedigree function")
+    age: float = Field(description="Age in years")
 
 
 class PredictionResponse(BaseModel):
@@ -58,26 +56,26 @@ class HealthResponse(BaseModel):
     model_source: str
 
 
-def _baked() -> dict[str, Any]:
+def _build_info() -> dict[str, Any]:
     """The model version, run ID and gate verdict that `serve.Dockerfile` wrote into the image.
 
     Outside a container the file does not exist, and `/health` says so.
     """
     settings = load_settings()
-    path = settings.project_root / "models" / "baked.json"
+    path = settings.project_root / "models" / "build_info.json"
     if path.exists():
         return json.loads(path.read_text())
     return {
         "model_version": None,
         "run_id": None,
         "gate_verdict": None,
-        "source": "working tree (not baked)",
+        "source": "working tree (not a built image)",
     }
 
 
 def create_app() -> FastAPI:
     settings = load_settings()
-    baked = _baked()
+    build_info = _build_info()
     model_path = Path(os.getenv("MODEL_PATH", settings.models_dir / "model.pkl"))
 
     app = FastAPI(

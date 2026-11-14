@@ -16,7 +16,7 @@ K8S = Path(__file__).resolve().parents[1] / "k8s"
 def deployment() -> dict:
     path = K8S / "deployment.yaml"
     if not path.exists():
-        pytest.skip("k8s/deployment.yaml not written yet (Exercise 5).")
+        pytest.skip("k8s/deployment.yaml is missing: restore it with `git checkout k8s/deployment.yaml`.")
     return yaml.safe_load(path.read_text())
 
 
@@ -24,7 +24,7 @@ def deployment() -> dict:
 def service() -> dict:
     path = K8S / "service.yaml"
     if not path.exists():
-        pytest.skip("k8s/service.yaml not written yet (Exercise 5).")
+        pytest.skip("k8s/service.yaml is missing: restore it with `git checkout k8s/service.yaml`.")
     return yaml.safe_load(path.read_text())
 
 

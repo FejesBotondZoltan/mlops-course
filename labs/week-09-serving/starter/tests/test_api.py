@@ -88,22 +88,22 @@ class _Version:
 
 
 def test_the_image_names_the_champion_only_when_it_holds_the_champion():
-    from week_09_serving.cli import bake_values
+    from week_09_serving.cli import build_info_values
 
-    same = bake_values("GO", "run-a", _Version(2, "run-a"))
+    same = build_info_values("GO", "run-a", _Version(2, "run-a"))
     assert same["MODEL_VERSION"] == "2" and same["MODEL_SOURCE"] == "registry champion"
 
-    other = bake_values("GO", "run-b", _Version(2, "run-a"))
+    other = build_info_values("GO", "run-b", _Version(2, "run-a"))
     assert other["MODEL_VERSION"] == "unknown", (
         "the local model was trained by another run, so the image must not claim version 2"
     )
 
-    offline = bake_values(None, None, None)
+    offline = build_info_values(None, None, None)
     assert offline == {"MODEL_VERSION": "unknown", "RUN_ID": "unknown",
                        "GATE_VERDICT": "unknown", "MODEL_SOURCE": "local models/model.pkl"}
 
 
-# ── Your service (Exercise 2) ───────────────────────────────────────────────
+# ── /health (Exercise 2, step 2) ────────────────────────────────────────────
 
 
 def test_a_valid_payload_scores(client):
